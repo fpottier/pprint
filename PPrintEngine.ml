@@ -12,6 +12,23 @@
 (**************************************************************************)
 
 (* ------------------------------------------------------------------------- *)
+
+(* The last element of a non-empty list. *)
+
+let rec last x xs =
+  match xs with
+  | [] ->
+      x
+  | x :: xs ->
+      last x xs
+
+let last = function
+  | [] ->
+      assert false
+  | x :: xs ->
+      last x xs
+
+(* ------------------------------------------------------------------------- *)
 (* ------------------------------------------------------------------------- *)
 
 (* A uniform interface for output channels. *)
@@ -440,19 +457,16 @@ module Renderer (Output : OUTPUT) = struct
 	state.indentation <- i;
 	shift stack state
 
-    (* If flattening mode is on, then we conceptually print an infinite amount of
-       whitespace by moving [state.column] past [state.width]. This will cause an
-       immediate failure. Thus, we will backtrack. If we come back in flattening
-       mode, we will backtrack again (there is a possible inefficiency here) until
-       the stack becomes empty and we come back in non-flattening mode, at which
-       point we will be able to honor this [HardLine]. *)
-
-    (* TEMPORARY why not backtrack directly through the whole stack? *)
+    (* If flattening mode is on, then [HardLine] causes an immediate failure. We
+       backtrack all the way to the state found at the bottom of the stack.
+       (Indeed, if we were to backtrack to the state found at the top of the stack,
+       then we would come back to this point in flattening mode, and fail again.)
+       This will take us back to non-flattening mode, so that, when we come back
+       to this [HardLine], we will be able to honor it. *)
 
     | HardLine, true ->
         assert (stack <> []); (* since flattening mode is on, the stack must be non-empty. *)
-        state.column <- state.width + 1;
-        shift stack state
+        run [] (last stack)
 
     (* The first piece of input is an [IfFlat] conditional instruction. *)
 

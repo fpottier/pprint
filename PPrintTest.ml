@@ -5,7 +5,7 @@ let d : document =
     group (
       text "coucou" ^^ hardline ^^
 	text "my friend"
-    ) ^^ break 1 ^^ text "oh"
+    ) ^^ break 1 ^^ words "oh my god this is supposed to be an incredibly long text that I will have to break"
   )
 
 let () =
