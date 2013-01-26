@@ -11,13 +11,7 @@
 (*                                                                        *)
 (**************************************************************************)
 
-(* This is an adaptation of Daan Leijen's [PPrint] library, which itself is
-   based on the ideas developed by Philip Wadler in ``A Prettier Printer''.
-   For more information, see:
-
-     http://www.cs.uu.nl/~daan/pprint.html
-     http://homepages.inf.ed.ac.uk/wadler/papers/prettier/prettier.pdf *)
-
+(* ------------------------------------------------------------------------- *)
 (* ------------------------------------------------------------------------- *)
 
 (* A uniform interface for output channels. *)
@@ -30,10 +24,10 @@ end
 
 (* ------------------------------------------------------------------------- *)
 
-(* Two implementations of the above interface, respectively based on
-   output channels and memory buffers. This compensates for the fact
-   that ocaml's standard library does not allow creating an output
-   channel out of a memory buffer (a regrettable omission). *)
+(* Three implementations of the above interface, respectively based on output
+   channels, memory buffers, and formatters. This compensates for the fact
+   that ocaml's standard library does not allow creating an output channel
+   that feeds into a memory buffer (a regrettable omission). *)
 
 module ChannelOutput : OUTPUT with type channel = out_channel = struct
   type channel = out_channel
@@ -53,6 +47,7 @@ module FormatterOutput : OUTPUT with type channel = Format.formatter = struct
   let substring fmt = fst (Format.pp_get_formatter_output_functions fmt ())
 end
 
+(* ------------------------------------------------------------------------- *)
 (* ------------------------------------------------------------------------- *)
 
 (* Here is the algebraic data type of documents. It is analogous to Daan
@@ -80,15 +75,16 @@ type document =
 
   | String of string * int * int
 
-    (* [FancyString (s, ofs, len, column_len)] is a string containing
-       fancy characters (color escape characters, UTF-8 or multibyte
-       chars...) : the visible column len is different from the hard
-       String.length. We assume, but do not check, that fancystrings do
-       not contain a newline character. *)
+  (* [FancyString (s, ofs, len, apparent_length)] is a (portion of a) string
+     that may contain fancy characters: color escape characters, UTF-8 or
+     multi-byte characters, etc. Thus, the apparent length (which corresponds
+     to what will be visible on screen) differs from the length (which is a
+     number of bytes, and is reported by [String.length]). We assume, but do
+     not check, that fancystrings do not contain a newline character. *)
 
   | FancyString of string * int * int * int
 
-    (* [Blank n] is a document that consists of [n] blank characters. *)
+  (* [Blank n] is a document that consists of [n] blank characters. *)
 
   | Blank of int
 
@@ -131,6 +127,87 @@ type document =
        at the beginning of the current line. *)
 
   | Nesting of (int -> document)
+
+(* ------------------------------------------------------------------------- *)
+
+(* The above algebraic data type is not exposed to the user. Instead, we
+   expose the following functions. Note that [IfFlat] and [HardLine] are
+   not exposed. *)
+
+let empty =
+  Empty
+
+let char c =
+  assert (c <> '\n');
+  Char c
+
+let substring s ofs len =
+  if len = 0 then
+    Empty
+  else
+    String (s, ofs, len)
+
+let text s =
+  substring s 0 (String.length s)
+
+let fancysubstring s ofs len apparent_length =
+  if len = 0 then
+    Empty
+  else
+    FancyString (s, ofs, len, apparent_length)
+
+let fancytext s apparent_length =
+  fancysubstring s 0 (String.length s) apparent_length
+
+(* The following function was stolen from [Batteries]. *)
+let utf8_length s =
+  let rec length_aux s c i =
+    if i >= String.length s then c else
+    let n = Char.code (String.unsafe_get s i) in
+    let k =
+      if n < 0x80 then 1 else
+      if n < 0xe0 then 2 else
+      if n < 0xf0 then 3 else 4
+    in
+    length_aux s (c + 1) (i + k)
+  in
+  length_aux s 0 0
+
+let utf8text s =
+  fancytext s (utf8_length s)
+
+let blank n =
+  if n = 0 then
+    Empty
+  else
+    Blank n
+
+let (^^) x y =
+  match x, y with
+  | Empty, x
+  | x, Empty ->
+      x
+  | _, _ ->
+      Cat (x, y)
+
+let nest i x =
+  assert (i >= 0);
+  Nest (i, x)
+
+let group x =
+  Group x
+
+let column f =
+  Column f
+
+let nesting f =
+  Nesting f
+
+let ifflat doc1 doc2 =
+  IfFlat (doc1, doc2)
+
+let hardline =
+  HardLine
 
 (* ------------------------------------------------------------------------- *)
 
@@ -323,8 +400,8 @@ module Renderer (Output : OUTPUT) = struct
 
     | String (s, ofs, len), _ ->
 	emit_string stack state s ofs len len
-    | FancyString (s, ofs, len, column_len), _ ->
-	emit_string stack state s ofs len column_len
+    | FancyString (s, ofs, len, apparent_length), _ ->
+	emit_string stack state s ofs len apparent_length
     | Blank n, _ ->
 	emit_blanks stack state n
 
@@ -479,14 +556,14 @@ module Renderer (Output : OUTPUT) = struct
      output buffer), updates the current column, discards the first piece of
      input, and continues. *)
 
-  and emit_string stack state s ofs len column_len =
+  and emit_string stack state s ofs len apparent_length =
     begin match stack with
     | [] ->
 	Output.substring state.channel s ofs len
     | _ ->
 	state.output <- OString (s, ofs, len, state.output)
     end;
-    state.column <- state.column + column_len;
+    state.column <- state.column + apparent_length;
     shift stack state
 
   (* [emit_blanks] prints a blank string (either to the output channel or to
@@ -538,9 +615,9 @@ module Renderer (Output : OUTPUT) = struct
       | String (s, ofs, len) ->
 	  Output.substring channel s ofs len;
 	  column := !column + len
-      | FancyString (s, ofs, len, column_len) ->
+      | FancyString (s, ofs, len, apparent_length) ->
 	  Output.substring channel s ofs len;
-	  column := !column + column_len
+	  column := !column + apparent_length
       | Blank n ->
 	  blanks channel n;
 	  column := !column + n
@@ -566,7 +643,7 @@ end
 
 (* ------------------------------------------------------------------------- *)
 
-(* Instantiating the renderers for the two kinds of output channels. *)
+(* Instantiating the renderers for the three kinds of output channels. *)
 
 module Channel =
   Renderer(ChannelOutput)
@@ -576,65 +653,6 @@ module PpBuffer =
 
 module Formatter =
   Renderer(FormatterOutput)
-
-(* ------------------------------------------------------------------------- *)
-
-(* Constructors. *)
-
-let empty =
-  Empty
-
-let (^^) x y =
-  match x, y with
-  | Empty, x
-  | x, Empty ->
-      x
-  | _, _ ->
-      Cat (x, y)
-
-let ifflat doc1 doc2 =
-  IfFlat (doc1, doc2)
-
-let hardline =
-  HardLine
-
-let char c =
-  assert (c <> '\n');
-  Char c
-
-let substring s ofs len =
-  if len = 0 then
-    Empty
-  else
-    String (s, ofs, len)
-
-let fancysubstring s ofs len column_len =
-  match substring s ofs len with
-    | String (s, ofs, len) ->
-        FancyString (s, ofs, len, column_len)
-    | other -> other
-
-let text s =
-  substring s 0 (String.length s)
-
-let blank n =
-  if n = 0 then
-    Empty
-  else
-    Blank n
-
-let nest i x =
-  assert (i >= 0);
-  Nest (i, x)
-
-let column f =
-  Column f
-
-let nesting f =
-  Nesting f
-
-let group x =
-  Group x
 
 (* ------------------------------------------------------------------------- *)
 
@@ -708,10 +726,8 @@ let string s =
 (* We do not check for '\n', as we try not to make assumptions
    regarding fancystring contents : it may contain a multibyte character
    containing a '\n' part. *)
-let fancystring s column_len =
-  fancysubstring s 0 (String.length s) column_len
 
-let fancy measure = fun s -> fancystring s (measure s)
+let fancy measure = fun s -> fancytext s (measure s)
 
 let group_break1 = group break1
 

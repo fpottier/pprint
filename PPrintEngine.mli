@@ -11,28 +11,80 @@
 (*                                                                        *)
 (**************************************************************************)
 
-(** Pprint is an adaptation of Daan Leijen's [PPrint] library, which itself is
-   based on the ideas developed by Philip Wadler in ``A Prettier Printer''. *)
-
 (* ------------------------------------------------------------------------- *)
 
-(** {4 Basic combinators for building documents.} *)
+(** {4 Low-level combinators for building documents.} *)
 
+(** Documents must be built in memory before they are rendered. This may seem
+    costly, but it is a simple approach, and works well. *)
+
+(** This is the abstract type of documents. *)
 type document
 
+(** The following basic (low-level) combinators allow constructing documents. *)
+
+(** [empty] is the empty document. *)
 val empty: document
-val hardline: document
+
+(** [char c] is a document that consists of the single character [c]. This
+    character must not be a newline. *)
 val char: char -> document
-val substring: string -> int -> int -> document
-val fancysubstring : string -> int -> int -> int -> document
+
+(** [text s] is a document that consists of the string [s]. This string must
+    not contain a newline. *)
 val text: string -> document
+
+(** [substring s ofs len] is a document that consists of the portion of the
+    string [s] delimited by the offset [ofs] and the length [len]. This
+    portion must contain a newline. *)
+val substring: string -> int -> int -> document
+
+(** [fancytext s] is a document that consists of the string [s]. This string
+    must not contain a newline. The string may contain fancy characters: color
+    escape characters, UTF-8 or multi-byte characters, etc. Thus, its apparent
+    length (which measures how many columns the text will take up on screen)
+    differs from its length in bytes. *)
+val fancytext: string -> int -> document
+
+(** [fancysubstring s ofs len apparent_length] is a document that consists of
+    the portion of the string [s] delimited by the offset [ofs] and the length
+    [len]. This portion must contain a newline. The string may contain fancy
+    characters. *)
+val fancysubstring : string -> int -> int -> int -> document
+
+(** [utf8text s] is a document that consists of the UTF-8-encoded string [s].
+    This string must not contain a newline. *)
+val utf8text: string -> document
+
+(** [blank n] is a document that consists of [n] blank characters. *)
 val blank: int -> document
+
+(** [doc1 ^^ doc2] is the concatenation of the documents [doc1] and [doc2]. *)
 val (^^): document -> document -> document
+
+(** [nest j doc] is the document [doc], in which the indentation level has
+    been increased by [j], that is, in which [j] blanks have been inserted
+    after every newline character. Read this again: indentation is inserted
+    after every newline character. No indentation is inserted at the beginning
+    of the document. *)
 val nest: int -> document -> document
-val column: (int -> document) -> document
-val nesting: (int -> document) -> document
+
+(** [group doc] encodes an alternative. If [doc] fits on a single line, then
+    [group doc] is rendered on a single line, like [doc]. Otherwise, the group
+    is dissolved, and [group doc] is rendered like [doc]. There might be
+    further groups within [doc], whose presence will lead to further choices
+    being explored. *)
 val group: document -> document
-val ifflat: document -> document -> document
+
+(** [column f] is the document obtained by applying the function [f] to the
+    current column number. This combinator allows making the construction of
+    a document dependent on the current column number. *)
+val column: (int -> document) -> document
+
+(* [nesting f] is the document obtained by applying the function [f] to the
+   current indentation level, that is, the number of indentation (blank)
+   characters that were inserted at the beginning of the current line. *)
+val nesting: (int -> document) -> document
 
 (* ------------------------------------------------------------------------- *)
 
@@ -57,7 +109,6 @@ val break0: document
 val break1: document
 
 val string: string -> document
-val fancystring: string -> int -> document
 val fancy: (string -> int) -> string -> document
 val words: string -> document
 
@@ -196,7 +247,8 @@ end
 
 (* ------------------------------------------------------------------------- *)
 
-(** {4 Renderers to output channels and to memory buffers.} *)
+(** {4 Renderers that produce output in an output channel, in a memory buffer,
+    or in a formatter channel.} *)
 
 open PPrintRenderer
 
