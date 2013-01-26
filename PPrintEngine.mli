@@ -11,12 +11,14 @@
 (*                                                                        *)
 (**************************************************************************)
 
-(* ------------------------------------------------------------------------- *)
-
-(** {4 Low-level combinators for building documents.} *)
+(** {4 Building documents.} *)
 
 (** Documents must be built in memory before they are rendered. This may seem
     costly, but it is a simple approach, and works well. *)
+
+(** The following operations form a set of basic (low-level) combinators for
+    building documents. On top of these combinators, higher-level combinators
+    can be defined: see [PPrintCombinators]. *)
 
 (** This is the abstract type of documents. *)
 type document
@@ -59,6 +61,12 @@ val utf8text: string -> document
 (** [blank n] is a document that consists of [n] blank characters. *)
 val blank: int -> document
 
+(** [break n] is a document which consists of either [n] blank characters,
+    when forced to display on a single line, or a single newline character,
+    otherwise. Note that there is no choice at this point: choices are encoded
+    by the [group] combinator. *)
+val break: int -> document
+
 (** [doc1 ^^ doc2] is the concatenation of the documents [doc1] and [doc2]. *)
 val (^^): document -> document -> document
 
@@ -69,11 +77,10 @@ val (^^): document -> document -> document
     of the document. *)
 val nest: int -> document -> document
 
-(** [group doc] encodes an alternative. If [doc] fits on a single line, then
-    [group doc] is rendered on a single line, like [doc]. Otherwise, the group
-    is dissolved, and [group doc] is rendered like [doc]. There might be
-    further groups within [doc], whose presence will lead to further choices
-    being explored. *)
+(** [group doc] encodes a choice. If possible, then the entire document [group
+    doc] is rendered on a single line. Otherwise, the group is dissolved, and
+    [doc] is rendered. There might be further groups within [doc], whose
+    presence will lead to further choices being explored. *)
 val group: document -> document
 
 (** [column f] is the document obtained by applying the function [f] to the
@@ -81,10 +88,27 @@ val group: document -> document
     a document dependent on the current column number. *)
 val column: (int -> document) -> document
 
-(* [nesting f] is the document obtained by applying the function [f] to the
-   current indentation level, that is, the number of indentation (blank)
-   characters that were inserted at the beginning of the current line. *)
+(** [nesting f] is the document obtained by applying the function [f] to the
+    current indentation level, that is, the number of indentation (blank)
+    characters that were inserted at the beginning of the current line. *)
 val nesting: (int -> document) -> document
+
+(** {4 Rendering documents.} *)
+
+(** that produce output in an output channel, in a memory buffer,
+    or in a formatter channel. *)
+
+module Channel : PPrintRenderer.RENDERER
+  with type channel = out_channel
+   and type document = document
+
+module PpBuffer : PPrintRenderer.RENDERER
+  with type channel = Buffer.t
+   and type document = document
+
+module Formatter : PPrintRenderer.RENDERER
+  with type channel = Format.formatter
+   and type document = document
 
 (* ------------------------------------------------------------------------- *)
 
@@ -97,16 +121,6 @@ val indent: int -> document -> document
 (* ------------------------------------------------------------------------- *)
 
 (** {4 High-level combinators for building documents.} *)
-
-(** [break n] Puts [n] spaces in flat mode and a new line otherwise.
-   Equivalent to: [ifflat (String.make n ' ') hardline] *)
-val break: int -> document
-
-(** [break0] equivalent to [break 0] *)
-val break0: document
-
-(** [break1] equivalent to [break 1] *)
-val break1: document
 
 val string: string -> document
 val fancy: (string -> int) -> string -> document
@@ -247,19 +261,6 @@ end
 
 (* ------------------------------------------------------------------------- *)
 
-(** {4 Renderers that produce output in an output channel, in a memory buffer,
-    or in a formatter channel.} *)
-
-open PPrintRenderer
-
-module Channel : RENDERER with type channel = out_channel and type document = document
-
-module PpBuffer : RENDERER with type channel = Buffer.t and type document = document
-
-module Formatter : RENDERER with type channel = Format.formatter and type document = document
-
-(* ------------------------------------------------------------------------- *)
-
 type constructor = string
 type type_name = string
 type record_field = string
@@ -316,8 +317,3 @@ module type DOCUMENT_REPRESENTATION =
 
 module ML : DOCUMENT_REPRESENTATION
 
-(** {4 Deprecated} *)
-val line: document
-val linebreak: document
-val softline: document
-val softbreak: document

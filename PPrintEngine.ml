@@ -177,10 +177,31 @@ let utf8text s =
   fancytext s (utf8_length s)
 
 let blank n =
-  if n = 0 then
-    Empty
-  else
-    Blank n
+  match n with
+  | 0 ->
+      Empty
+  | 1 ->
+      Blank 1
+  | _ ->
+      Blank n
+
+let internal_break i =
+  IfFlat (blank i, HardLine)
+
+let break0 =
+  internal_break 0
+
+let break1 =
+  internal_break 1
+
+let break i =
+  match i with
+  | 0 ->
+      break0
+  | 1 ->
+      break1
+  | _ ->
+      internal_break i
 
 let (^^) x y =
   match x, y with
@@ -202,12 +223,6 @@ let column f =
 
 let nesting f =
   Nesting f
-
-let ifflat doc1 doc2 =
-  IfFlat (doc1, doc2)
-
-let hardline =
-  HardLine
 
 (* ------------------------------------------------------------------------- *)
 
@@ -708,9 +723,6 @@ let underscore      = char '_'
 let bang            = char '!'
 let bar             = char '|'
 
-let break i         = ifflat (text (String.make i ' ')) hardline
-let break0          = ifflat empty hardline
-let break1          = ifflat space hardline
 
 let string s =
   let n = String.length s in
@@ -948,8 +960,10 @@ module ML = struct
   let unknown tyname _ = sprintf "<abstr:%s>" tyname
 end
 
-(* Deprecated *)
-let line            = ifflat space hardline
-let linebreak       = ifflat empty hardline
-let softline        = group line
-let softbreak       = group linebreak
+(* The following definitions have been deprecated. We keep them as a
+   comment to help users of old versions perform the transition.
+let line            = break1
+let linebreak       = break0
+let softline        = group break1
+let softbreak       = group break0
+*)
