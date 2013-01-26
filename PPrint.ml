@@ -1,2 +1,2 @@
-open PPrintEngine
-open PPrintCombinators
+include PPrintEngine
+include PPrintCombinators

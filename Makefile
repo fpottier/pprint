@@ -1,7 +1,7 @@
-.PHONY: all clean doc
+.PHONY: all clean doc test
 
 OCAMLBUILD := ocamlbuild -use-ocamlfind -cflags "-g" -lflags "-g" -classic-display
-MAIN       := PPrint
+MAIN       := PPrintTest
 
 all:
 	$(OCAMLBUILD) $(MAIN).native
@@ -20,3 +20,6 @@ doc: all
 	  -d html \
 	  -charset utf8 \
 	  *.mli
+
+test: all
+	./$(MAIN).native
