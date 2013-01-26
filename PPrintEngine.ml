@@ -265,6 +265,11 @@ module Renderer (Output : OUTPUT) = struct
   type channel =
       Output.channel
 
+  type dummy =
+      document
+  type document =
+      dummy
+
   (* Printing blank space (indentation characters). *)
 
   let blank_length =
