@@ -62,6 +62,16 @@ val twice: document -> document
     the document [doc]. *)
 val repeat: int -> document -> document
 
+(** {1 Lists} *)
+
+(** [concat docs] is the concatenation of the documents in the list [docs]. *)
+val concat: document list -> document
+
+(** [separate separator docs] is the concatenation of the documents in the
+    list [docs]. The separator [separator] is inserted between every two
+    adjacent documents. *)
+val separate: document -> document list -> document
+
 (** {1 Text} *)
 
 (** [lines s] is the list of documents obtained by splitting [s] at newline

@@ -72,6 +72,8 @@ let brackets        = enclose lbracket rbracket
 
 (* Some functions on lists. *)
 
+(* A variant of [map] that keeps track of the element index. *)
+
 let mapi (f : int -> 'a -> 'b) (xs : 'a list) : 'b list =
   let r = ref 0 in
   List.map (fun x ->
@@ -80,7 +82,9 @@ let mapi (f : int -> 'a -> 'b) (xs : 'a list) : 'b list =
     f i x
   ) xs
 
-let foldi (f : int -> 'b -> 'a -> 'b) (accu : 'b) (xs : 'a list) : 'b =
+(* A variant of [fold_left] that keeps track of the element index. *)
+
+let foldli (f : int -> 'b -> 'a -> 'b) (accu : 'b) (xs : 'a list) : 'b =
   let r = ref 0 in
   List.fold_left (fun accu x ->
     let i = !r in
@@ -101,6 +105,14 @@ let concat docs =
      along the left branch, pushing the nodes onto its stack as
      it goes down, effectively reversing the list again. *)
   List.fold_left (^^) empty docs
+
+let separate separator docs =
+  foldli (fun i x y ->
+    if i = 0 then
+      y
+    else
+      x ^^ separator ^^ y
+  ) empty docs
 
 (* ------------------------------------------------------------------------- *)
 
@@ -169,7 +181,7 @@ let words s =
   List.rev (skipping [] 0)
 
 let flow docs =
-  foldi (fun i accu doc ->
+  foldli (fun i accu doc ->
     if i = 0 then
       doc
     else
@@ -200,6 +212,9 @@ let indent i d =
 
 
 
+let safe_text s =
+  separate (break 1) (lines s)
+
 let rec fold1 f docs =
    match docs with
    | [] ->
@@ -208,12 +223,6 @@ let rec fold1 f docs =
        doc
    | doc :: docs ->
        f doc (fold1 f docs)
-
-let separate separator docs =
-  fold1 (fun x y -> x ^^ separator ^^ y) docs
-
-let safe_text s =
-  separate (break 1) (lines s)
 
 let rec fold1map f g docs =
    match docs with
