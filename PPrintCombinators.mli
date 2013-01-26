@@ -42,7 +42,8 @@ val bar: document
 
 (** {1 Delimiters} *)
 
-(* The following combinators enclose a document within a pair of delimiters. *)
+(** The following combinators enclose a document within a pair of delimiters.
+    No whitespace or line break is introduced. *)
 
 val squotes: document -> document
 val dquotes: document -> document
@@ -117,11 +118,7 @@ val align: document -> document
    box forms a hanging indent. *)
 val hang: int -> document -> document
 
-(* ------------------------------------------------------------------------- *)
-
-(** {1 High-level combinators} *)
-
-(** The document [prefix spacing left right] has the following flat layout: {[
+(** [prefix spacing left right] has the following flat layout: {[
 left right
 ]}
 and the following non-flat layout:
@@ -134,7 +131,7 @@ when rendered flat.
  *)
 val prefix: int -> document -> document -> document
 
-(** The document [infix spacing middle left right] has the following non-flat layout: {[
+(** [infix spacing middle left right] has the following flat layout: {[
 left middle right
 ]}
 and the following non-flat layout: {[
@@ -146,37 +143,32 @@ The parameter [spacing] controls the number of spaces between [left] and [middle
 *)
 val infix: int -> document -> document -> document -> document
 
-(** [infix_com middle left right]
-      Flat layout: [left][middle] [right]
-      Otherwise:   [left][middle]
-                     [right]
- *)
-val infix_com: document -> document -> document -> document
+(** [surround n b opening contents closing] has the following flat layout: {[
+opening contents closing
+]}
+and the following non-flat layout: {[
+opening
+  contents
+closing
+]}
+The parameter [n] controls the nesting of [contents] (when not flat).
+The parameter [b] controls the spacing between [opening] and [contents]
+and between [contents] and [closing] (when flat).
+*)
+val surround: int -> int -> document -> document -> document -> document
 
-(** [surround nesting break open_doc contents close_doc] *)
-val surround: int -> document -> document -> document -> document -> document
-
-(** [surround1 open_txt contents close_txt]
-     Flat:      [open_txt][contents][close_txt]
-     Otherwise: [open_txt]
-                 [contents]
-                [close_txt]
- *)
-val surround1: document -> document -> document -> document
-
-(** [surround2 open_txt contents close_txt]
-     Flat:      [open_txt] [contents] [close_txt]
-     Otherwise: [open_txt]
-                  [contents]
-                [close_txt]
- *)
-val surround2: document -> document -> document -> document
-
-(** [soft_surround nesting break open_doc contents close_doc] *)
-val soft_surround: int -> document -> document -> document -> document -> document
+(** [soft_surround] is analogous to [surround], but involves more than one
+    group, so it offers possibilities other than the completely flat layout
+    (where [opening], [contents], and [closing] appear on a single line) and
+    the completely developed layout (where [opening], [contents], and
+    [closing] appear on separate lines). It tries to place the beginning of
+    [contents] on the same line as [opening], and to place [closing] on the
+    same line as the end of [contents], if possible.
+*)
+val soft_surround: int -> int -> document -> document -> document -> document
 
 (** [seq indent break empty_seq open_seq sep_seq close_seq contents] *)
-val seq: int -> document -> document -> document -> document -> document ->
+val seq: int -> int -> document -> document -> document -> document ->
          document list -> document 
 
 (** [seq1 open_seq sep_seq close_seq contents]

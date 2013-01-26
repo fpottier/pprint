@@ -217,10 +217,6 @@ let align d =
 let hang i d =
   align (nest i d)
 
-(* ------------------------------------------------------------------------- *)
-
-(* High-level combinators and short-hands. *)
-
 let ( !^ ) = text
 
 let ( ^/^ ) x y =
@@ -239,36 +235,21 @@ let ( ^@@^ ) x y = group (nest 2 (x ^/^ y))
 let infix (spacing : int) op x y =
   prefix spacing (x ^^ blank spacing ^^ op) y
 
+let surround n b opening contents closing =
+  group (opening ^^ nest n (       break b  ^^ contents) ^^        break b ^^ closing )
 
+let soft_surround n b opening contents closing =
+  group (opening ^^ nest n (group (break b) ^^ contents) ^^ group (break b ^^ closing))
 
-
-
-let group_break1 = group (break 1) (* TEMPORARY *)
-
-
-
-let infix_com op x y = x ^^ op ^^ group_break1 ^^ y
-
-let surround n sep open_doc contents close_doc =
-  group (open_doc ^^ nest n (sep ^^ contents) ^^ sep ^^ close_doc)
-let surround1 opening contents closing =
-  surround 1 (break 0) opening contents closing
-let surround2 opening contents closing =
-  surround 2 (break 1) opening contents closing
-
-let soft_surround n sep open_doc contents close_doc =
-  group (open_doc ^^ nest n (group sep ^^ contents) ^^
-         group (sep ^^ close_doc))
-
-let seq indent break empty_seq open_seq sep_seq close_seq = function
+let seq indent b empty_seq open_seq sep_seq close_seq = function
   | [] -> empty_seq
   | xs ->
-      surround indent break
+      surround indent b
         open_seq (separate sep_seq xs) close_seq
 let seq1 opening separator closing =
-  seq 1 (break 0) (opening ^^ closing) opening (separator ^^ break 1) closing
+  seq 1 0 (opening ^^ closing) opening (separator ^^ break 1) closing
 let seq2 opening separator closing =
-  seq 2 (break 1) (opening ^^ closing) opening (separator ^^ break 1) closing
+  seq 2 1 (opening ^^ closing) opening (separator ^^ break 1) closing
 
 let sprintf fmt = Printf.ksprintf arbitrary_text fmt
 
