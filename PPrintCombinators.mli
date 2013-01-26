@@ -64,19 +64,22 @@ val repeat: int -> document -> document
 
 (** {1 Text} *)
 
-(** The document [lines s] is obtained by splitting [s] at newline characters
-    and replacing each newline with [break 1]. Thus, if this document fits on
-    a single line, the line breaks are replaced with spaces; otherwise, the
-    line breaks are respected. The code that looks for newline characters is
-    not UTF-8 aware. *)
-val lines: string -> document
-
-(** The document [words s] is obtained by splitting [s] into words, and
-    rendering the resulting list of words in free-flow, ragged-right style;
-    that is, a new line is started whenever the next word does not fit on the
-    current line. The code that looks for whitespace characters is not UTF-8
+(** [lines s] is the list of documents obtained by splitting [s] at newline
+    characters. The code that looks for newline characters is not UTF-8
     aware. *)
-val words: string -> document
+val lines: string -> document list
+
+(** [words s] is the list of documents obtained by splitting [s] at whitespace
+    characters. The code that looks for whitespace characters is not UTF-8
+    aware. *)
+val words: string -> document list
+
+(** [flow docs] separates the documents in the list [docs] with brekable
+    spaces in such a way that a new line begins whenever a document does not
+    fit on the current line. This is useful for typesetting free-flowing,
+    ragged-right text. *)
+val flow: document list -> document
+
 
 
 
@@ -94,7 +97,6 @@ val indent: int -> document -> document
 
 
 
-val fold: (document -> document -> document) -> document list -> document
 val fold1: (document -> document -> document) -> document list -> document
 val fold1map: (document -> document -> document) -> ('a -> document) -> 'a list -> document
 val sepmap: document -> ('a -> document) -> 'a list -> document

@@ -70,21 +70,66 @@ let brackets        = enclose lbracket rbracket
 
 (* ------------------------------------------------------------------------- *)
 
+(* Some functions on lists. *)
+
+let mapi (f : int -> 'a -> 'b) (xs : 'a list) : 'b list =
+  let r = ref 0 in
+  List.map (fun x ->
+    let i = !r in
+    r := i + 1;
+    f i x
+  ) xs
+
+let foldi (f : int -> 'b -> 'a -> 'b) (accu : 'b) (xs : 'a list) : 'b =
+  let r = ref 0 in
+  List.fold_left (fun accu x ->
+    let i = !r in
+    r := i + 1;
+    f i accu x
+  ) accu xs
+
+(* ------------------------------------------------------------------------- *)
+
+(* Working with lists of documents. *)
+
+let concat docs =
+  (* We take advantage of the fact that [^^] operates in constant
+     time, regardless of the size of its arguments. The document
+     that is constructed is essentially a reversed list (i.e., a
+     tree that is biased towards the left). This is not a problem;
+     when pretty-printing this document, the engine will descend
+     along the left branch, pushing the nodes onto its stack as
+     it goes down, effectively reversing the list again. *)
+  List.fold_left (^^) empty docs
+
+(* ------------------------------------------------------------------------- *)
+
 (* Text. *)
 
-(* TEMPORARY for greater versatility, how to split and what to do with
-   the units should be orthogonal concerns. *)
+(* This variant of [String.index_from] returns an option. *)
+
+let index_from s i c =
+  try
+    Some (String.index_from s i c)
+  with Not_found ->
+    None
+
+(* [lines s] chops the string [s] into a list of lines, which are turned
+   into documents. *)
 
 let lines s =
-  let n = String.length s in
-  let rec chop i =
-    try
-      let j = String.index_from s i '\n' in
-      substring s i (j - i) ^^ break 1 ^^ chop (j + 1)
-    with Not_found ->
-      substring s i (n - i)
+  let rec chop accu i =
+    match index_from s i '\n' with
+    | Some j ->
+        let accu = substring s i (j - i) :: accu in
+	chop accu (j + 1)
+    | None ->
+        substring s i (String.length s - i) :: accu
   in
-  chop 0
+  List.rev (chop [] 0)
+
+(* [words s] chops the string [s] into a list of words, which are turned
+   into documents. *)
 
 let words s =
   let n = String.length s in
@@ -92,8 +137,8 @@ let words s =
   (* In this state, we have skipped at least one blank character. *)
   let rec skipping accu i = 
     if i = n then
-      (* Replace the whitespace at the end with a final space. *)
-      accu ^^ group (break 1)
+      (* There was whitespace at the end. Drop it. *)
+      accu
     else match s.[i] with
     | ' '
     | '\t'
@@ -102,39 +147,37 @@ let words s =
         (* Skip more whitespace. *)
 	skipping accu (i + 1)
     | _ ->
-        (* Begin a new word, preceded with a space. *)
-	word (break 1) accu i (i + 1)
+        (* Begin a new word. *)
+	word accu i (i + 1)
   (* In this state, we have skipped at least one non-blank character. *)
-  and word prefix accu i j =
+  and word accu i j =
     if j = n then
       (* Final word. *)
-      accu ^^ group (prefix ^^ substring s i (j - i))
+      substring s i (j - i) :: accu
     else match s.[j] with
     | ' '
     | '\t'
     | '\n'
     | '\r' ->
-        (* A new word has been identified. Add to the accumulator a
-	   group formed of [prefix] -- usually, [break 1] -- and the
-	   word. Thus, we will begin a new line if this word does not
-	   fit on the current line. *)
-	skipping (accu ^^ group (prefix ^^ substring s i (j - i))) (j + 1)
+        (* A new word has been identified. *)
+        let accu = substring s i (j - i) :: accu in	
+	skipping accu (j + 1)
     | _ ->
         (* Continue inside the current word. *)
-	word prefix accu i (j + 1)
+	word accu i (j + 1)
   in
-  if n = 0 then
-    empty
-  else
-    (* Start in the appropriate state. *)
-    match s.[0] with
-    | ' '
-    | '\t'
-    | '\n'
-    | '\r' ->
-	skipping empty 1
-    | _ ->
-	word empty empty 0 1
+  List.rev (skipping [] 0)
+
+let flow docs =
+  foldi (fun i accu doc ->
+    if i = 0 then
+      doc
+    else
+      accu ^^
+      (* This idiom allows beginning a new line if [doc] does not
+	 fit on the current line. *)
+      group (break 1 ^^ doc)
+  ) empty docs
 
 (* ------------------------------------------------------------------------- *)
 
@@ -157,8 +200,6 @@ let indent i d =
 
 
 
-let fold f docs     = List.fold_right f docs empty
-
 let rec fold1 f docs =
    match docs with
    | [] ->
@@ -167,6 +208,12 @@ let rec fold1 f docs =
        doc
    | doc :: docs ->
        f doc (fold1 f docs)
+
+let separate separator docs =
+  fold1 (fun x y -> x ^^ separator ^^ y) docs
+
+let safe_text s =
+  separate (break 1) (lines s)
 
 let rec fold1map f g docs =
    match docs with
@@ -227,7 +274,7 @@ let seq1 open_txt sep_txt close_txt =
 let seq2 open_txt sep_txt close_txt =
   seq 2 (break 1) !^(open_txt ^ close_txt) !^open_txt (!^sep_txt ^^ break 1) !^close_txt
 
-let sprintf fmt = Printf.ksprintf lines fmt
+let sprintf fmt = Printf.ksprintf safe_text fmt
 
 type constructor = string
 type type_name = string
@@ -318,7 +365,7 @@ module ML = struct
   let list f xs = seq2 "[" ";" "]" (List.map f xs)
   let array f xs = seq2 "[|" ";" "|]" (Array.to_list (Array.map f xs))
   let ref f x = record "ref" ["contents", f !x]
-  let float f = lines (MissingFloatRepr.float_repres f)
+  let float f = safe_text (MissingFloatRepr.float_repres f)
   let int = sprintf "%d"
   let int32 = sprintf "%ld"
   let int64 = sprintf "%Ld"
