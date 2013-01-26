@@ -90,26 +90,22 @@ val words: string -> document list
     ragged-right text. *)
 val flow: document list -> document
 
+(** {1 Alignment and indentation} *)
 
-
-
-
-(** {1 Low-level combinators for alignment and indentation} *)
-
+(** [align doc] increases the indentation level to reach the current
+    column. Thus, this document will be rendered within a box whose
+    upper left corner is the current position. *)
 val align: document -> document
+
+(* [hang n doc] is analogous to [align], but additionally indents
+   all lines, except the first one, by [n]. Thus, the text in the
+   box forms a hanging indent. *)
 val hang: int -> document -> document
-val indent: int -> document -> document
 
 (* ------------------------------------------------------------------------- *)
 
 (** {1 High-level combinators for building documents} *)
 
-
-
-
-val fold1: (document -> document -> document) -> document list -> document
-val fold1map: (document -> document -> document) -> ('a -> document) -> 'a list -> document
-val sepmap: document -> ('a -> document) -> 'a list -> document
 
 val optional: ('a -> document) -> 'a option -> document
 
@@ -118,28 +114,28 @@ val optional: ('a -> document) -> 'a option -> document
       Otherwise:   [left]
                      [right]
  *)
-val prefix: string -> document -> document
+val prefix: document -> document -> document
 
 (** [infix middle left right]
       Flat layout: [left] [middle] [right]
       Otherwise:   [left] [middle]
                      [right]
  *)
-val infix: string -> document -> document -> document
+val infix: document -> document -> document -> document
 
 (** [infix_com middle left right]
       Flat layout: [left][middle] [right]
       Otherwise:   [left][middle]
                      [right]
  *)
-val infix_com: string -> document -> document -> document
+val infix_com: document -> document -> document -> document
 
 (** [infix_dot middle left right]
       Flat layout: [left][middle][right]
       Otherwise: [left][middle]
                     [right]
  *)
-val infix_dot: string -> document -> document -> document
+val infix_dot: document -> document -> document -> document
 
 (** [surround nesting break open_doc contents close_doc] *)
 val surround: int -> document -> document -> document -> document -> document
@@ -150,7 +146,7 @@ val surround: int -> document -> document -> document -> document -> document
                  [contents]
                 [close_txt]
  *)
-val surround1: string -> document -> string -> document
+val surround1: document -> document -> document -> document
 
 (** [surround2 open_txt contents close_txt]
      Flat:      [open_txt] [contents] [close_txt]
@@ -158,7 +154,7 @@ val surround1: string -> document -> string -> document
                   [contents]
                 [close_txt]
  *)
-val surround2: string -> document -> string -> document
+val surround2: document -> document -> document -> document
 
 (** [soft_surround nesting break open_doc contents close_doc] *)
 val soft_surround: int -> document -> document -> document -> document -> document
@@ -173,7 +169,7 @@ val seq: int -> document -> document -> document -> document -> document ->
                    [contents][sep_seq]...[sep_seq][contents]
                   [close_seq]
  *)
-val seq1: string -> string -> string -> document list -> document
+val seq1: document -> document -> document -> document list -> document
 
 (** [seq2 open_seq sep_seq close_seq contents]
      Flat layout: [open_seq] [contents][sep_seq]...[sep_seq][contents] [close_seq]
@@ -181,13 +177,7 @@ val seq1: string -> string -> string -> document list -> document
                     [contents][sep_seq]...[sep_seq][contents]
                   [close_seq]
  *)
-val seq2: string -> string -> string -> document list -> document
-
-(** [group1 d] equivalent to [group (nest 1 d)] *)
-val group1: document -> document
-
-(** [group2 d] equivalent to [group (nest 2 d)] *)
-val group2: document -> document
+val seq2: document -> document -> document -> document list -> document
 
 module Operators : sig
   val ( ^^ ) : document -> document -> document
