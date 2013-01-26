@@ -96,13 +96,32 @@ let concat docs =
      it goes down, effectively reversing the list again. *)
   List.fold_left (^^) empty docs
 
-let separate separator docs =
+let separate sep docs =
   foldli (fun i accu doc ->
     if i = 0 then
       doc
     else
-      accu ^^ separator ^^ doc
+      accu ^^ sep ^^ doc
   ) empty docs
+
+let concat_map f xs =
+  List.fold_left (fun accu x ->
+    accu ^^ f x
+  ) empty xs
+
+let separate_map sep f xs =
+  foldli (fun i accu x ->
+    if i = 0 then
+      f x
+    else
+      accu ^^ sep ^^ f x
+  ) empty xs
+
+let optional f = function
+  | None ->
+      empty
+  | Some x ->
+      f x
 
 (* ------------------------------------------------------------------------- *)
 
@@ -129,6 +148,9 @@ let lines s =
         substring s i (String.length s - i) :: accu
   in
   List.rev (chop [] 0)
+
+let arbitrary_text s =
+  separate (break 1) (lines s)
 
 (* [words s] chops the string [s] into a list of words, which are turned
    into documents. *)
@@ -197,32 +219,34 @@ let hang i d =
 
 (* ------------------------------------------------------------------------- *)
 
+(* High-level combinators and short-hands. *)
+
+let ( !^ ) = text
+
+let ( ^/^ ) x y =
+  x ^^ break 1 ^^ y
+
+let prefix x y =
+  group (x ^^ nest 2 (break 1 ^^ y))
+
+let (^//^) =
+  prefix
+
+(* Deprecated. *)
+let ( ^@^  ) x y = group (x ^/^ y)
+let ( ^@@^ ) x y = group (nest 2 (x ^/^ y))
 
 
 
 
-let safe_text s =
-  separate (break 1) (lines s)
 
-let optional f = function
-  | None ->
-      empty
-  | Some x ->
-      f x
 
-module Operators = struct
-  let ( !^ ) = text
-  let ( ^^ ) = ( ^^ )
-  let ( ^/^ ) x y = x ^^ break 1 ^^ y
-  let ( ^//^ ) x y = group (x ^^ nest 2 (break 1 ^^ y))
-  let ( ^@^ ) x y = group (x ^^ break 1 ^^ y)
-  let ( ^@@^ ) x y = group (nest 2 (x ^^ break 1 ^^ y))
-end
+
 
 let group_break1 = group (break 1) (* TEMPORARY *)
 
-open Operators
-let prefix op x = op ^//^ x
+
+
 let infix op x y = (x ^^ space ^^ op) ^//^ y
 let infix_dot op x y = group (nest 2 ((x ^^ op) ^^ break 0 ^^ y))
 let infix_com op x y = x ^^ op ^^ group_break1 ^^ y
@@ -248,7 +272,7 @@ let seq1 opening separator closing =
 let seq2 opening separator closing =
   seq 2 (break 1) (opening ^^ closing) opening (separator ^^ break 1) closing
 
-let sprintf fmt = Printf.ksprintf safe_text fmt
+let sprintf fmt = Printf.ksprintf arbitrary_text fmt
 
 type constructor = string
 type type_name = string
@@ -342,7 +366,7 @@ module ML = struct
   let rbracketbar = text "|]"
   let array f xs = seq2 lbracketbar semi rbracketbar (Array.to_list (Array.map f xs))
   let ref f x = record "ref" ["contents", f !x]
-  let float f = safe_text (MissingFloatRepr.float_repres f)
+  let float f = arbitrary_text (MissingFloatRepr.float_repres f)
   let int = sprintf "%d"
   let int32 = sprintf "%ld"
   let int64 = sprintf "%Ld"

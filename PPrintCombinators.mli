@@ -62,15 +62,25 @@ val twice: document -> document
     the document [doc]. *)
 val repeat: int -> document -> document
 
-(** {1 Lists} *)
+(** {1 Lists and options} *)
 
 (** [concat docs] is the concatenation of the documents in the list [docs]. *)
 val concat: document list -> document
 
-(** [separate separator docs] is the concatenation of the documents in the
-    list [docs]. The separator [separator] is inserted between every two
-    adjacent documents. *)
+(** [separate sep docs] is the concatenation of the documents in the list
+    [docs]. The separator [sep] is inserted between every two adjacent
+    documents. *)
 val separate: document -> document list -> document
+
+(** [concat_map f xs] is equivalent to [concat (List.map f xs)]. *)
+val concat_map: ('a -> document) -> 'a list -> document
+
+(** [separate_map sep f xs] is equivalent to [separate sep (List.map f xs)]. *)
+val separate_map: document -> ('a -> document) -> 'a list -> document
+
+(** [optional f None] is the empty document. [optional f (Some x)] is
+    the document [f x]. *)
+val optional: ('a -> document) -> 'a option -> document
 
 (** {1 Text} *)
 
@@ -78,6 +88,11 @@ val separate: document -> document list -> document
     characters. The code that looks for newline characters is not UTF-8
     aware. *)
 val lines: string -> document list
+
+(** [arbitrary_text s] is equivalent to [separate (break 1) (lines s)].
+    It is analogous to [text s], but is valid even if the string [s]
+    contains newline characters. *)
+val arbitrary_text: string -> document
 
 (** [words s] is the list of documents obtained by splitting [s] at whitespace
     characters. The code that looks for whitespace characters is not UTF-8
@@ -102,17 +117,22 @@ val align: document -> document
    box forms a hanging indent. *)
 val hang: int -> document -> document
 
+
+
 (* ------------------------------------------------------------------------- *)
 
 (** {1 High-level combinators for building documents} *)
 
 
-val optional: ('a -> document) -> 'a option -> document
-
 (** [prefix left right]
-      Flat layout: [left] [right]
-      Otherwise:   [left]
-                     [right]
+Flat layout: {[
+left right
+]}
+Otherwise:
+{[
+left
+  right
+]}
  *)
 val prefix: document -> document -> document
 
@@ -179,14 +199,17 @@ val seq1: document -> document -> document -> document list -> document
  *)
 val seq2: document -> document -> document -> document list -> document
 
-module Operators : sig
-  val ( ^^ ) : document -> document -> document
-  val ( !^ ) : string -> document
-  val ( ^/^ ) : document -> document -> document
-  val ( ^//^ ) : document -> document -> document
-  val ( ^@^ ) : document -> document -> document
-  val ( ^@@^ ) : document -> document -> document
-end
+(** {1 Short-hands} *)
+
+(** [!^s] is a short-hand for [text s]. *)
+val ( !^ ) : string -> document
+
+(** [x ^/^ y] separates [x] and [y] with a breakable space.
+    It is a short-hand for [x ^^ break 1 ^^ y]. *)
+val ( ^/^ ) : document -> document -> document
+
+(** [x ^//^ y] is a short-hand for [prefix x y]. *)
+val ( ^//^ ) : document -> document -> document
 
 (* ------------------------------------------------------------------------- *)
 
