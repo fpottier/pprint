@@ -19,4 +19,4 @@ doc: all
 	  -I _build \
 	  -d html \
 	  -charset utf8 \
-	  *.{ml,mli}
+	  *.mli
