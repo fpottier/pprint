@@ -55,7 +55,7 @@ end
    the unary constructor [Group], and the constant [Line] is replaced with
    more general constructions, namely [IfFlat], which provides alternative
    forms depending on the current flattening mode, and [HardLine], which
-   represents a newline character, and is invalid in flattening mode. *)
+   represents a newline character, and causes a failure in flattening mode. *)
 
 type document =
 
@@ -93,15 +93,16 @@ type document =
 
   | IfFlat of document * document
 
-    (* When in flattening mode, [HardLine] is illegal. When not in flattening
-       mode, it represents a newline character, followed with an appropriate
-       number of indentation. A safe way of using [HardLine] is to only use it
-       directly within the right branch of an [IfFlat] construct. *)
+  (* When in flattening mode, [HardLine] causes a failure, which requires
+     backtracking all the way until the stack is empty. When not in flattening
+     mode, it represents a newline character, followed with an appropriate
+     number of indentation. A common way of using [HardLine] is to only use it
+     directly within the right branch of an [IfFlat] construct. *)
 
   | HardLine
 
-    (* [Cat doc1 doc2] is the concatenation of the documents [doc1] and
-       [doc2]. *)
+  (* [Cat doc1 doc2] is the concatenation of the documents [doc1] and
+     [doc2]. *)
 
   | Cat of document * document
 
@@ -131,8 +132,7 @@ type document =
 (* ------------------------------------------------------------------------- *)
 
 (* The above algebraic data type is not exposed to the user. Instead, we
-   expose the following functions. Note that [IfFlat] and [HardLine] are
-   not exposed. *)
+   expose the following functions. Note that [IfFlat] is not exposed. *)
 
 let empty =
   Empty
@@ -175,6 +175,9 @@ let utf8_length s =
 
 let utf8text s =
   fancytext s (utf8_length s)
+
+let hardline =
+  HardLine
 
 let blank n =
   match n with
@@ -420,17 +423,15 @@ module Renderer (Output : OUTPUT) = struct
     | Blank n, _ ->
 	emit_blanks stack state n
 
-    (* The first piece of input is a hard newline instruction. Such an
-       instruction is valid only when flattening mode is off. *)
+    (* The first piece of input is a hard newline instruction. *)
 
-    (* We emit a newline character, followed by the prescribed amount of
-       indentation. We update the current state to record how many
-       indentation characters were printed and to to reflect the new
-       column number. Then, we discard the current piece of input and
-       continue. *)
+    (* If flattening mode is off, then we behave as follows. We emit a newline
+       character, followed by the prescribed amount of indentation. We update
+       the current state to record how many indentation characters were
+       printed and to to reflect the new column number. Then, we discard the
+       current piece of input and continue. *)
 
-    | HardLine, flattening ->
-	assert (not flattening); (* flattening mode must be off. *)
+    | HardLine, false ->
 	assert (stack = []);     (* since flattening mode is off, the stack must be empty. *)
 	Output.char state.channel '\n';
 	let i = state.indent1 in
@@ -438,6 +439,20 @@ module Renderer (Output : OUTPUT) = struct
 	state.column <- i;
 	state.indentation <- i;
 	shift stack state
+
+    (* If flattening mode is on, then we conceptually print an infinite amount of
+       whitespace by moving [state.column] past [state.width]. This will cause an
+       immediate failure. Thus, we will backtrack. If we come back in flattening
+       mode, we will backtrack again (there is a possible inefficiency here) until
+       the stack becomes empty and we come back in non-flattening mode, at which
+       point we will be able to honor this [HardLine]. *)
+
+    (* TEMPORARY why not backtrack directly through the whole stack? *)
+
+    | HardLine, true ->
+        assert (stack <> []); (* since flattening mode is on, the stack must be non-empty. *)
+        state.column <- state.width + 1;
+        shift stack state
 
     (* The first piece of input is an [IfFlat] conditional instruction. *)
 

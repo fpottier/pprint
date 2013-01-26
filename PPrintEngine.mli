@@ -60,6 +60,11 @@ val fancysubstring : string -> int -> int -> int -> document
     This string must not contain a newline. *)
 val utf8text: string -> document
 
+(** [hardline] is a forced newline document. This document forces all enclosing
+    groups to be printed in non-flattening mode. In other words, any enclosing
+    groups are dissolved. *)
+val hardline: document
+
 (** [blank n] is a document that consists of [n] blank characters. *)
 val blank: int -> document
 
