@@ -660,12 +660,12 @@ end
 
 (* Instantiating the renderers for the three kinds of output channels. *)
 
-module Channel =
+module ToChannel =
   Renderer(ChannelOutput)
 
-module PpBuffer =
+module ToBuffer =
   Renderer(BufferOutput)
 
-module Formatter =
+module ToFormatter =
   Renderer(FormatterOutput)
 

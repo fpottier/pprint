@@ -1,28 +1,8 @@
-type document =
-    PPrintEngine.document
-
 open PPrintEngine
 
 (* ------------------------------------------------------------------------- *)
 
-(* Low-level combinators for alignment and indentation. *)
-
-let align d =
-  column (fun k ->
-    nesting (fun i ->
-      nest (k - i) d
-    )
-  )
-
-let hang i d =
-  align (nest i d)
-
-let indent i d =
-  hang i (blank i ^^ d)
-
-(* ------------------------------------------------------------------------- *)
-
-(* High-level combinators. *)
+(* Predefined single-character documents. *)
 
 let lparen          = char '('
 let rparen          = char ')'
@@ -41,6 +21,7 @@ let comma           = char ','
 let space           = char ' '
 let dot             = char '.'
 let sharp           = char '#'
+let slash           = char '/'
 let backslash       = char '\\'
 let equals          = char '='
 let qmark           = char '?'
@@ -57,62 +38,25 @@ let underscore      = char '_'
 let bang            = char '!'
 let bar             = char '|'
 
+(* ------------------------------------------------------------------------- *)
 
-let string s =
-  let n = String.length s in
-  let rec chop i =
-    try
-      let j = String.index_from s i '\n' in
-      substring s i (j - i) ^^ break 1 ^^ chop (j + 1)
-    with Not_found ->
-      substring s i (n - i)
+(* Repetition. *)
+
+let twice doc =
+  doc ^^ doc
+
+let repeat n doc =
+  let rec loop n doc accu =
+    if n = 0 then
+      accu
+    else
+      loop (n - 1) doc (doc ^^ accu)
   in
-  chop 0
+  loop n doc empty
 
-(* We do not check for '\n', as we try not to make assumptions
-   regarding fancystring contents : it may contain a multibyte character
-   containing a '\n' part. *)
+(* ------------------------------------------------------------------------- *)
 
-let fancy measure = fun s -> fancytext s (measure s)
-
-let group_break1 = group (break 1)
-
-let words s =
-  let n = String.length s in
-  let rec blank accu i = (* we have skipped over at least one blank character *)
-    if i = n then
-      accu ^^ group_break1
-    else match s.[i] with
-    | ' '
-    | '\t'
-    | '\n'
-    | '\r' ->
-	blank accu (i + 1)
-    | _ ->
-	word (break 1) accu i (i + 1)
-  and word prefix accu i j = (* we have skipped over at least one non-blank character *)
-    if j = n then
-      accu ^^ group (prefix ^^ substring s i (j - i))
-    else match s.[j] with
-    | ' '
-    | '\t'
-    | '\n'
-    | '\r' ->
-	blank (accu ^^ group (prefix ^^ substring s i (j - i))) (j + 1)
-    | _ ->
-	word prefix accu i (j + 1)
-  in
-  if n = 0 then
-    empty
-  else
-    match s.[0] with
-    | ' '
-    | '\t'
-    | '\n'
-    | '\r' ->
-	blank empty 1
-    | _ ->
-	word empty empty 0 1
+(* Delimiters. *)
 
 let enclose l r x   = l ^^ x ^^ r
 
@@ -123,6 +67,95 @@ let braces          = enclose lbrace rbrace
 let parens          = enclose lparen rparen
 let angles          = enclose langle rangle
 let brackets        = enclose lbracket rbracket
+
+(* ------------------------------------------------------------------------- *)
+
+(* Text. *)
+
+(* The following function was originally called [string], but this was not
+   a very good name. *)
+
+let lines s =
+  let n = String.length s in
+  let rec chop i =
+    try
+      let j = String.index_from s i '\n' in
+      substring s i (j - i) ^^ break 1 ^^ chop (j + 1)
+    with Not_found ->
+      substring s i (n - i)
+  in
+  chop 0
+
+let words s =
+  let n = String.length s in
+  (* A two-state finite automaton. *)
+  (* In this state, we have skipped at least one blank character. *)
+  let rec skipping accu i = 
+    if i = n then
+      (* Replace the whitespace at the end with a final space. *)
+      accu ^^ group (break 1)
+    else match s.[i] with
+    | ' '
+    | '\t'
+    | '\n'
+    | '\r' ->
+        (* Skip more whitespace. *)
+	skipping accu (i + 1)
+    | _ ->
+        (* Begin a new word, preceded with a space. *)
+	word (break 1) accu i (i + 1)
+  (* In this state, we have skipped at least one non-blank character. *)
+  and word prefix accu i j =
+    if j = n then
+      (* Final word. *)
+      accu ^^ group (prefix ^^ substring s i (j - i))
+    else match s.[j] with
+    | ' '
+    | '\t'
+    | '\n'
+    | '\r' ->
+        (* A new word has been identified. Add to the accumulator a
+	   group formed of [prefix] -- usually, [break 1] -- and the
+	   word. Thus, we will begin a new line if this word does not
+	   fit on the current line. *)
+	skipping (accu ^^ group (prefix ^^ substring s i (j - i))) (j + 1)
+    | _ ->
+        (* Continue inside the current word. *)
+	word prefix accu i (j + 1)
+  in
+  if n = 0 then
+    empty
+  else
+    (* Start in the appropriate state. *)
+    match s.[0] with
+    | ' '
+    | '\t'
+    | '\n'
+    | '\r' ->
+	skipping empty 1
+    | _ ->
+	word empty empty 0 1
+
+(* ------------------------------------------------------------------------- *)
+
+(* Low-level combinators for alignment and indentation. *)
+
+let align d =
+  column (fun k ->
+    nesting (fun i ->
+      nest (k - i) d
+    )
+  )
+
+let hang i d =
+  align (nest i d)
+
+let indent i d =
+  hang i (blank i ^^ d)
+
+(* High-level combinators. *)
+
+
 
 let fold f docs     = List.fold_right f docs empty
 
@@ -166,6 +199,8 @@ module Operators = struct
   let ( ^@@^ ) x y = group2 (x ^^ break 1 ^^ y)
 end
 
+let group_break1 = group (break 1) (* TEMPORARY *)
+
 open Operators
 let prefix op x = !^op ^//^ x
 let infix op x y = (x ^^ space ^^ !^op) ^//^ y
@@ -192,7 +227,7 @@ let seq1 open_txt sep_txt close_txt =
 let seq2 open_txt sep_txt close_txt =
   seq 2 (break 1) !^(open_txt ^ close_txt) !^open_txt (!^sep_txt ^^ break 1) !^close_txt
 
-let sprintf fmt = Printf.ksprintf string fmt
+let sprintf fmt = Printf.ksprintf lines fmt
 
 type constructor = string
 type type_name = string
@@ -283,7 +318,7 @@ module ML = struct
   let list f xs = seq2 "[" ";" "]" (List.map f xs)
   let array f xs = seq2 "[|" ";" "|]" (Array.to_list (Array.map f xs))
   let ref f x = record "ref" ["contents", f !x]
-  let float f = string (MissingFloatRepr.float_repres f)
+  let float f = lines (MissingFloatRepr.float_repres f)
   let int = sprintf "%d"
   let int32 = sprintf "%ld"
   let int64 = sprintf "%Ld"

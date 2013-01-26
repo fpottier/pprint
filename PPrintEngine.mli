@@ -11,6 +11,8 @@
 (*                                                                        *)
 (**************************************************************************)
 
+(** A pretty-printing engine and a set of basic document combinators. *)
+
 (** {1 Building documents} *)
 
 (** Documents must be built in memory before they are rendered. This may seem
@@ -96,17 +98,17 @@ val nesting: (int -> document) -> document
 (** {1 Rendering documents} *)
 
 (** This renderer sends its output into an output channel. *)
-module Channel : PPrintRenderer.RENDERER
+module ToChannel : PPrintRenderer.RENDERER
   with type channel = out_channel
    and type document = document
 
 (** This renderer sends its output into a memory buffer. *)
-module PpBuffer : PPrintRenderer.RENDERER
+module ToBuffer : PPrintRenderer.RENDERER
   with type channel = Buffer.t
    and type document = document
 
 (** This renderer sends its output into a formatter channel. *)
-module Formatter : PPrintRenderer.RENDERER
+module ToFormatter : PPrintRenderer.RENDERER
   with type channel = Format.formatter
    and type document = document
 

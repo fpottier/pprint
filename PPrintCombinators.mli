@@ -1,21 +1,10 @@
-type document =
-    PPrintEngine.document
+open PPrintEngine
 
-(* ------------------------------------------------------------------------- *)
+(** A set of high-level combinators for building documents. *)
 
-(** {4 Low-level combinators for alignment and indentation.} *)
+(** {1 Single characters} *)
 
-val align: document -> document
-val hang: int -> document -> document
-val indent: int -> document -> document
-
-(* ------------------------------------------------------------------------- *)
-
-(** {4 High-level combinators for building documents.} *)
-
-val string: string -> document
-val fancy: (string -> int) -> string -> document
-val words: string -> document
+(** The following constant documents consist of a single character. *)
 
 val lparen: document
 val rparen: document
@@ -34,6 +23,7 @@ val comma: document
 val space: document
 val dot: document
 val sharp: document
+val slash: document
 val backslash: document
 val equals: document
 val qmark: document
@@ -50,6 +40,10 @@ val underscore: document
 val bang: document
 val bar: document
 
+(** {1 Delimiters} *)
+
+(* The following combinators enclose a document within a pair of delimiters. *)
+
 val squotes: document -> document
 val dquotes: document -> document
 val bquotes: document -> document
@@ -57,6 +51,48 @@ val braces: document -> document
 val parens: document -> document
 val angles: document -> document
 val brackets: document -> document
+
+(** {1 Repetition} *)
+
+(** [twice doc] is the document obtained by concatenating two copies of
+    the document [doc]. *)
+val twice: document -> document
+
+(** [repeat n doc] is the document obtained by concatenating [n] copies of
+    the document [doc]. *)
+val repeat: int -> document -> document
+
+(** {1 Text} *)
+
+(** The document [lines s] is obtained by splitting [s] at newline characters
+    and replacing each newline with [break 1]. Thus, if this document fits on
+    a single line, the line breaks are replaced with spaces; otherwise, the
+    line breaks are respected. The code that looks for newline characters is
+    not UTF-8 aware. *)
+val lines: string -> document
+
+(** The document [words s] is obtained by splitting [s] into words, and
+    rendering the resulting list of words in free-flow, ragged-right style;
+    that is, a new line is started whenever the next word does not fit on the
+    current line. The code that looks for whitespace characters is not UTF-8
+    aware. *)
+val words: string -> document
+
+
+
+
+(** {1 Low-level combinators for alignment and indentation} *)
+
+val align: document -> document
+val hang: int -> document -> document
+val indent: int -> document -> document
+
+(* ------------------------------------------------------------------------- *)
+
+(** {1 High-level combinators for building documents} *)
+
+
+
 
 val fold: (document -> document -> document) -> document list -> document
 val fold1: (document -> document -> document) -> document list -> document
@@ -182,7 +218,7 @@ module type REPRESENTATION = sig
 
   (* ------------------------------------------------------------------------- *)
 
-  (** {4 Value representation for primitive types.} *)
+  (** {1 Value representation for primitive types} *)
 
   val string : string -> representation
   val int : int -> representation
