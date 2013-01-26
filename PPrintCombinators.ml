@@ -72,8 +72,8 @@ let brackets        = enclose lbracket rbracket
 
 (* Text. *)
 
-(* The following function was originally called [string], but this was not
-   a very good name. *)
+(* TEMPORARY for greater versatility, how to split and what to do with
+   the units should be orthogonal concerns. *)
 
 let lines s =
   let n = String.length s in
