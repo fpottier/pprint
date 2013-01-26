@@ -241,15 +241,12 @@ let surround n b opening contents closing =
 let soft_surround n b opening contents closing =
   group (opening ^^ nest n (group (break b) ^^ contents) ^^ group (break b ^^ closing))
 
-let seq indent b empty_seq open_seq sep_seq close_seq = function
-  | [] -> empty_seq
-  | xs ->
-      surround indent b
-        open_seq (separate sep_seq xs) close_seq
-let seq1 opening separator closing =
-  seq 1 0 (opening ^^ closing) opening (separator ^^ break 1) closing
-let seq2 opening separator closing =
-  seq 2 1 (opening ^^ closing) opening (separator ^^ break 1) closing
+let surround_separate n b void opening sep closing docs =
+  match docs with
+  | [] ->
+      void
+  | _ :: _ ->
+      surround n b opening (separate sep docs) closing
 
 let sprintf fmt = Printf.ksprintf arbitrary_text fmt
 
@@ -331,6 +328,11 @@ end
 
 (* TEMPORARY avoid List.map *)
 module ML = struct
+let seq1 opening separator closing =
+  surround_separate 2 0 (opening ^^ closing) opening (separator ^^ break 1) closing
+let seq2 opening separator closing =
+  surround_separate 2 1 (opening ^^ closing) opening (separator ^^ break 1) closing
+
   type representation = document
   let tuple = seq1 lparen comma rparen
   let variant _ cons _ args =

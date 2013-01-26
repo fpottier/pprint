@@ -167,25 +167,10 @@ val surround: int -> int -> document -> document -> document -> document
 *)
 val soft_surround: int -> int -> document -> document -> document -> document
 
-(** [seq indent break empty_seq open_seq sep_seq close_seq contents] *)
-val seq: int -> int -> document -> document -> document -> document ->
-         document list -> document 
-
-(** [seq1 open_seq sep_seq close_seq contents]
-     Flat layout: [open_seq][contents][sep_seq]...[sep_seq][contents][close_seq]
-     Otherwise:   [open_seq]
-                   [contents][sep_seq]...[sep_seq][contents]
-                  [close_seq]
- *)
-val seq1: document -> document -> document -> document list -> document
-
-(** [seq2 open_seq sep_seq close_seq contents]
-     Flat layout: [open_seq] [contents][sep_seq]...[sep_seq][contents] [close_seq]
-     Otherwise:   [open_seq]
-                    [contents][sep_seq]...[sep_seq][contents]
-                  [close_seq]
- *)
-val seq2: document -> document -> document -> document list -> document
+(** [surround_separate n b void opening sep closing docs] is equivalent to
+    [surround n b opening (separate sep docs) closing], except when the
+    list [docs] is empty, in which case it reduces to [void]. *)
+val surround_separate: int -> int -> document -> document -> document -> document -> document list -> document 
 
 (** {1 Short-hands} *)
 
