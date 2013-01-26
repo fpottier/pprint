@@ -226,18 +226,18 @@ let ( !^ ) = text
 let ( ^/^ ) x y =
   x ^^ break 1 ^^ y
 
-let prefix x y =
-  group (x ^^ nest 2 (break 1 ^^ y))
+let prefix (spacing : int) x y =
+  group (x ^^ nest 2 (break spacing ^^ y))
 
 let (^//^) =
-  prefix
+  prefix 1
 
 (* Deprecated. *)
 let ( ^@^  ) x y = group (x ^/^ y)
 let ( ^@@^ ) x y = group (nest 2 (x ^/^ y))
 
-
-
+let infix (spacing : int) op x y =
+  prefix spacing (x ^^ blank spacing ^^ op) y
 
 
 
@@ -247,8 +247,6 @@ let group_break1 = group (break 1) (* TEMPORARY *)
 
 
 
-let infix op x y = (x ^^ space ^^ op) ^//^ y
-let infix_dot op x y = group (nest 2 ((x ^^ op) ^^ break 0 ^^ y))
 let infix_com op x y = x ^^ op ^^ group_break1 ^^ y
 
 let surround n sep open_doc contents close_doc =
@@ -357,7 +355,7 @@ module ML = struct
   let variant _ cons _ args =
     if args = [] then !^cons else !^cons ^^ tuple args
   let record _ fields =
-    seq2 lbrace semi rbrace (List.map (fun (k, v) -> infix equals !^k v) fields)
+    seq2 lbrace semi rbrace (List.map (fun (k, v) -> infix 1 equals !^k v) fields)
   let option f = function
     | Some x -> !^"Some" ^^ tuple [f x]
     | None -> !^"None"

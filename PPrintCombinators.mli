@@ -117,31 +117,34 @@ val align: document -> document
    box forms a hanging indent. *)
 val hang: int -> document -> document
 
-
-
 (* ------------------------------------------------------------------------- *)
 
-(** {1 High-level combinators for building documents} *)
+(** {1 High-level combinators} *)
 
-
-(** [prefix left right]
-Flat layout: {[
+(** The document [prefix spacing left right] has the following flat layout: {[
 left right
 ]}
-Otherwise:
+and the following non-flat layout:
 {[
 left
   right
 ]}
+The parameter [spacing] controls the number of spaces between [left] and [right]
+when rendered flat.
  *)
-val prefix: document -> document -> document
+val prefix: int -> document -> document -> document
 
-(** [infix middle left right]
-      Flat layout: [left] [middle] [right]
-      Otherwise:   [left] [middle]
-                     [right]
- *)
-val infix: document -> document -> document -> document
+(** The document [infix spacing middle left right] has the following non-flat layout: {[
+left middle right
+]}
+and the following non-flat layout: {[
+left middle
+  right
+]}
+The parameter [spacing] controls the number of spaces between [left] and [middle]
+(always) and between [middle] and [right] (when rendered flat).
+*)
+val infix: int -> document -> document -> document -> document
 
 (** [infix_com middle left right]
       Flat layout: [left][middle] [right]
@@ -149,13 +152,6 @@ val infix: document -> document -> document -> document
                      [right]
  *)
 val infix_com: document -> document -> document -> document
-
-(** [infix_dot middle left right]
-      Flat layout: [left][middle][right]
-      Otherwise: [left][middle]
-                    [right]
- *)
-val infix_dot: document -> document -> document -> document
 
 (** [surround nesting break open_doc contents close_doc] *)
 val surround: int -> document -> document -> document -> document -> document
@@ -208,7 +204,7 @@ val ( !^ ) : string -> document
     It is a short-hand for [x ^^ break 1 ^^ y]. *)
 val ( ^/^ ) : document -> document -> document
 
-(** [x ^//^ y] is a short-hand for [prefix x y]. *)
+(** [x ^//^ y] is a short-hand for [prefix 1 x y]. *)
 val ( ^//^ ) : document -> document -> document
 
 (* ------------------------------------------------------------------------- *)
