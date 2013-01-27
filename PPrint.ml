@@ -1,3 +1,5 @@
+(** A package of all of the above. *)
+
 include PPrintEngine
 include PPrintCombinators
-include PPrintOCaml
+module OCaml = PPrintOCaml

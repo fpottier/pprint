@@ -189,7 +189,11 @@ val soft_surround: int -> int -> document -> document -> document -> document
 (** [surround_separate n b void opening sep closing docs] is equivalent to
     [surround n b opening (separate sep docs) closing], except when the
     list [docs] is empty, in which case it reduces to [void]. *)
-val surround_separate: int -> int -> document -> document -> document -> document -> document list -> document 
+val surround_separate: int -> int -> document -> document -> document -> document -> document list -> document
+
+(** [surround_separate_map n b void opening sep closing f xs] is equivalent to
+    [surround_separate n b void opening sep closing (List.map f xs)]. *)
+val surround_separate_map: int -> int -> document -> document -> document -> document -> ('a -> document) -> 'a list -> document
 
 (** {1 Short-hands} *)
 

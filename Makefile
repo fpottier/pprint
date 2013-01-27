@@ -19,7 +19,7 @@ doc: all
 	  -I _build \
 	  -d html \
 	  -charset utf8 \
-	  *.mli
+	  PPrintRenderer.ml *.mli PPrint.ml
 
 test: all
 	./$(MAIN).native

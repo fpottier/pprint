@@ -1,4 +1,4 @@
-(** A signature for document renderers. *)
+(** A common signature for the multiple document renderers proposed by {!PPrintEngine}. *)
 
 module type RENDERER = sig
   

@@ -263,3 +263,10 @@ let surround_separate n b void opening sep closing docs =
   | _ :: _ ->
       surround n b opening (separate sep docs) closing
 
+let surround_separate_map n b void opening sep closing f xs =
+  match xs with
+  | [] ->
+      void
+  | _ :: _ ->
+      surround n b opening (separate_map sep f xs) closing
+
