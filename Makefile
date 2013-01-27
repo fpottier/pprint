@@ -1,6 +1,7 @@
 .PHONY: all clean doc test
 
 OCAMLBUILD := ocamlbuild -use-ocamlfind -cflags "-g" -lflags "-g" -classic-display
+DOCDIR     := doc
 MAIN       := PPrintTest
 
 all:
@@ -8,16 +9,16 @@ all:
 
 clean:
 	rm -f *~ $(MAIN).native
-	rm -rf html
+	rm -rf doc
 	$(OCAMLBUILD) -clean
 
 doc: all
-	@rm -rf html
-	@mkdir html
+	@rm -rf $(DOCDIR)
+	@mkdir $(DOCDIR)
 	ocamlfind ocamldoc \
 	  -html \
 	  -I _build \
-	  -d html \
+	  -d $(DOCDIR) \
 	  -charset utf8 \
 	  PPrintRenderer.ml *.mli PPrint.ml
 
