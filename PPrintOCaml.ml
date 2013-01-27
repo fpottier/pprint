@@ -2,7 +2,7 @@ open PPrintEngine
 open PPrintCombinators
 open PPrintRepresentation
 
-let sprintf fmt = Printf.ksprintf arbitrary_text fmt
+let sprintf fmt = Printf.ksprintf arbitrary_string fmt
 
 module type DOCUMENT_REPRESENTATION =
   REPRESENTATION with type representation = document
@@ -43,16 +43,16 @@ let seq2 opening separator closing =
   let variant _ cons _ args =
     if args = [] then !^cons else !^cons ^^ tuple args
   let record _ fields =
-    seq2 lbrace semi rbrace (List.map (fun (k, v) -> infix 1 equals !^k v) fields)
+    seq2 lbrace semi rbrace (List.map (fun (k, v) -> infix 2 1 equals !^k v) fields)
   let option f = function
     | Some x -> !^"Some" ^^ tuple [f x]
     | None -> !^"None"
   let list f xs = seq2 lbracket semi rbracket (List.map f xs)
-  let lbracketbar = text "[|"
-  let rbracketbar = text "|]"
+  let lbracketbar = string "[|"
+  let rbracketbar = string "|]"
   let array f xs = seq2 lbracketbar semi rbracketbar (Array.to_list (Array.map f xs))
   let ref f x = record "ref" ["contents", f !x]
-  let float f = arbitrary_text (MissingFloatRepr.float_repres f)
+  let float f = arbitrary_string (MissingFloatRepr.float_repres f)
   let int = sprintf "%d"
   let int32 = sprintf "%ld"
   let int64 = sprintf "%Ld"

@@ -42,8 +42,16 @@ val bar: document
 
 (** {1 Delimiters} *)
 
+(** [precede l x] is [l ^^ x]. *)
+val precede: document -> document -> document
+(** [terminate r x] is [x ^^ r]. *)
+val terminate: document -> document -> document
+(** [enclose l r x] is [l ^^ x ^^ r]. *)
+val enclose: document -> document -> document -> document
+
 (** The following combinators enclose a document within a pair of delimiters.
-    No whitespace or line break is introduced. *)
+    They are partial applications of [enclose]. No whitespace or line break is
+    introduced. *)
 
 val squotes: document -> document
 val dquotes: document -> document
@@ -79,6 +87,12 @@ val concat_map: ('a -> document) -> 'a list -> document
 (** [separate_map sep f xs] is equivalent to [separate sep (List.map f xs)]. *)
 val separate_map: document -> ('a -> document) -> 'a list -> document
 
+(** [separate2 sep last_sep docs] is the concatenation of the documents in the
+    list [docs]. The separator [sep] is inserted between every two adjacent
+    documents, except, between the last two documents, where the separator
+    [last_sep] is used instead. *)
+val separate2: document -> document -> document list -> document
+
 (** [optional f None] is the empty document. [optional f (Some x)] is
     the document [f x]. *)
 val optional: ('a -> document) -> 'a option -> document
@@ -90,10 +104,10 @@ val optional: ('a -> document) -> 'a option -> document
     aware. *)
 val lines: string -> document list
 
-(** [arbitrary_text s] is equivalent to [separate (break 1) (lines s)].
-    It is analogous to [text s], but is valid even if the string [s]
+(** [arbitrary_string s] is equivalent to [separate (break 1) (lines s)].
+    It is analogous to [string s], but is valid even if the string [s]
     contains newline characters. *)
-val arbitrary_text: string -> document
+val arbitrary_string: string -> document
 
 (** [words s] is the list of documents obtained by splitting [s] at whitespace
     characters. The code that looks for whitespace characters is not UTF-8
@@ -118,7 +132,7 @@ val align: document -> document
    box forms a hanging indent. *)
 val hang: int -> document -> document
 
-(** [prefix spacing left right] has the following flat layout: {[
+(** [prefix n b left right] has the following flat layout: {[
 left right
 ]}
 and the following non-flat layout:
@@ -126,22 +140,27 @@ and the following non-flat layout:
 left
   right
 ]}
-The parameter [spacing] controls the number of spaces between [left] and [right]
-when rendered flat.
+The parameter [n] controls the nesting of [right] (when not flat).
+The parameter [b] controls the number of spaces between [left] and [right]
+(when flat).
  *)
-val prefix: int -> document -> document -> document
+val prefix: int -> int -> document -> document -> document
 
-(** [infix spacing middle left right] has the following flat layout: {[
+(** [jump n b right] is equivalent to [prefix n b empty right]. *)
+val jump: int -> int -> document -> document
+
+(** [infix n b middle left right] has the following flat layout: {[
 left middle right
 ]}
 and the following non-flat layout: {[
 left middle
   right
 ]}
-The parameter [spacing] controls the number of spaces between [left] and [middle]
-(always) and between [middle] and [right] (when rendered flat).
+The parameter [n] controls the nesting of [right] (when not flat).
+The parameter [b] controls the number of spaces between [left] and [middle]
+(always) and between [middle] and [right] (when flat).
 *)
-val infix: int -> document -> document -> document -> document
+val infix: int -> int -> document -> document -> document -> document
 
 (** [surround n b opening contents closing] has the following flat layout: {[
 opening contents closing
@@ -152,7 +171,7 @@ opening
 closing
 ]}
 The parameter [n] controls the nesting of [contents] (when not flat).
-The parameter [b] controls the spacing between [opening] and [contents]
+The parameter [b] controls the number of spaces between [opening] and [contents]
 and between [contents] and [closing] (when flat).
 *)
 val surround: int -> int -> document -> document -> document -> document
@@ -174,13 +193,13 @@ val surround_separate: int -> int -> document -> document -> document -> documen
 
 (** {1 Short-hands} *)
 
-(** [!^s] is a short-hand for [text s]. *)
+(** [!^s] is a short-hand for [string s]. *)
 val ( !^ ) : string -> document
 
 (** [x ^/^ y] separates [x] and [y] with a breakable space.
     It is a short-hand for [x ^^ break 1 ^^ y]. *)
 val ( ^/^ ) : document -> document -> document
 
-(** [x ^//^ y] is a short-hand for [prefix 1 x y]. *)
+(** [x ^//^ y] is a short-hand for [prefix 2 1 x y]. *)
 val ( ^//^ ) : document -> document -> document
 

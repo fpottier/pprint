@@ -58,6 +58,8 @@ let repeat n doc =
 
 (* Delimiters. *)
 
+let precede   l x   = l ^^ x
+let terminate r x   = x ^^ r
 let enclose l r x   = l ^^ x ^^ r
 
 let squotes         = enclose squote squote
@@ -117,6 +119,15 @@ let separate_map sep f xs =
       accu ^^ sep ^^ f x
   ) empty xs
 
+let separate2 sep last_sep docs =
+  let n = List.length docs in
+  foldli (fun i accu doc ->
+    if i = 0 then
+      doc
+    else
+      accu ^^ (if i < n - 1 then sep else last_sep) ^^ doc
+  ) empty docs
+
 let optional f = function
   | None ->
       empty
@@ -149,7 +160,7 @@ let lines s =
   in
   List.rev (chop [] 0)
 
-let arbitrary_text s =
+let arbitrary_string s =
   separate (break 1) (lines s)
 
 (* [words s] chops the string [s] into a list of words, which are turned
@@ -217,23 +228,27 @@ let align d =
 let hang i d =
   align (nest i d)
 
-let ( !^ ) = text
+let ( !^ ) = string
 
 let ( ^/^ ) x y =
   x ^^ break 1 ^^ y
 
-let prefix (spacing : int) x y =
-  group (x ^^ nest 2 (break spacing ^^ y))
+let prefix n b x y =
+  group (x ^^ nest n (break b ^^ y))
 
 let (^//^) =
-  prefix 1
+  prefix 2 1
 
-(* Deprecated. *)
+let jump n b y =
+  group (nest n (break b ^^ y))
+
+(* Deprecated.
 let ( ^@^  ) x y = group (x ^/^ y)
 let ( ^@@^ ) x y = group (nest 2 (x ^/^ y))
+*)
 
-let infix (spacing : int) op x y =
-  prefix spacing (x ^^ blank spacing ^^ op) y
+let infix n b op x y =
+  prefix n b (x ^^ blank b ^^ op) y
 
 let surround n b opening contents closing =
   group (opening ^^ nest n (       break b  ^^ contents) ^^        break b ^^ closing )

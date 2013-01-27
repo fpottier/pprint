@@ -149,7 +149,7 @@ type document =
 (* ------------------------------------------------------------------------- *)
 
 (* The above algebraic data type is not exposed to the user. Instead, we
-   expose the following functions. Note that [IfFlat] is not exposed. *)
+   expose the following functions. *)
 
 let empty =
   Empty
@@ -164,7 +164,7 @@ let substring s ofs len =
   else
     String (s, ofs, len)
 
-let text s =
+let string s =
   substring s 0 (String.length s)
 
 let fancysubstring s ofs len apparent_length =
@@ -173,7 +173,7 @@ let fancysubstring s ofs len apparent_length =
   else
     FancyString (s, ofs, len, apparent_length)
 
-let fancytext s apparent_length =
+let fancystring s apparent_length =
   fancysubstring s 0 (String.length s) apparent_length
 
 (* The following function was stolen from [Batteries]. *)
@@ -190,8 +190,8 @@ let utf8_length s =
   in
   length_aux s 0 0
 
-let utf8text s =
-  fancytext s (utf8_length s)
+let utf8string s =
+  fancystring s (utf8_length s)
 
 let hardline =
   HardLine
@@ -243,6 +243,9 @@ let column f =
 
 let nesting f =
   Nesting f
+
+let ifflat x y =
+  IfFlat (x, y)
 
 (* ------------------------------------------------------------------------- *)
 

@@ -34,21 +34,21 @@ val empty: document
     character must not be a newline. *)
 val char: char -> document
 
-(** [text s] is a document that consists of the string [s]. This string must
+(** [string s] is a document that consists of the string [s]. This string must
     not contain a newline. *)
-val text: string -> document
+val string: string -> document
 
 (** [substring s ofs len] is a document that consists of the portion of the
     string [s] delimited by the offset [ofs] and the length [len]. This
     portion must contain a newline. *)
 val substring: string -> int -> int -> document
 
-(** [fancytext s] is a document that consists of the string [s]. This string
-    must not contain a newline. The string may contain fancy characters: color
-    escape characters, UTF-8 or multi-byte characters, etc. Thus, its apparent
-    length (which measures how many columns the text will take up on screen)
-    differs from its length in bytes. *)
-val fancytext: string -> int -> document
+(** [fancystring s apparent_length] is a document that consists of the string
+    [s]. This string must not contain a newline. The string may contain fancy
+    characters: color escape characters, UTF-8 or multi-byte characters,
+    etc. Thus, its apparent length (which measures how many columns the text
+    will take up on screen) differs from its length in bytes. *)
+val fancystring: string -> int -> document
 
 (** [fancysubstring s ofs len apparent_length] is a document that consists of
     the portion of the string [s] delimited by the offset [ofs] and the length
@@ -56,9 +56,9 @@ val fancytext: string -> int -> document
     characters. *)
 val fancysubstring : string -> int -> int -> int -> document
 
-(** [utf8text s] is a document that consists of the UTF-8-encoded string [s].
+(** [utf8string s] is a document that consists of the UTF-8-encoded string [s].
     This string must not contain a newline. *)
-val utf8text: string -> document
+val utf8string: string -> document
 
 (** [hardline] is a forced newline document. This document forces all enclosing
     groups to be printed in non-flattening mode. In other words, any enclosing
@@ -99,6 +99,13 @@ val column: (int -> document) -> document
     current indentation level, that is, the number of indentation (blank)
     characters that were inserted at the beginning of the current line. *)
 val nesting: (int -> document) -> document
+
+(** [ifflat doc1 doc2] is rendered as [doc1] if part of a group that can be
+    successfully flattened, and is rendered as [doc2] otherwise. Use this
+    operation with caution. Because the pretty-printer is free to choose
+    between [doc1] and [doc2], these documents should be semantically
+    equivalent. *)
+val ifflat: document -> document -> document
 
 (** {1 Rendering documents} *)
 

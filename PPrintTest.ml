@@ -1,7 +1,7 @@
 open PPrint
 
 let d : document =
-  text "Article: " ^^
+  string "Article: " ^^
   hang 2 (
   flow (words "Lors d'une réunion d'urgence
 à Abidjan, les chefs d'état-major

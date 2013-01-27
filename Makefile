@@ -8,7 +8,7 @@ all:
 
 clean:
 	rm -f *~ $(MAIN).native
-	rm -f html
+	rm -rf html
 	$(OCAMLBUILD) -clean
 
 doc: all
