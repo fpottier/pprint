@@ -1,11 +1,18 @@
-.PHONY: all clean doc test
+.PHONY: all install clean doc test
 
+include Makefile.arch
 OCAMLBUILD := ocamlbuild -use-ocamlfind -cflags "-g" -lflags "-g" -classic-display
+OCAMLFIND  := ocamlfind
 DOCDIR     := doc
 MAIN       := PPrintTest
+TO_BUILD   := PPrint.cmi PPrint.cmo PPrint.cmx PPrint.$(OBJ)
+TO_INSTALL := META $(patsubst %,_build/%,$(TO_BUILD))
 
 all:
-	$(OCAMLBUILD) $(MAIN).native
+	$(OCAMLBUILD) $(TO_BUILD)
+
+install: all
+	$(OCAMLFIND) install PPrint $(TO_INSTALL)
 
 clean:
 	rm -f *~ $(MAIN).native
@@ -23,4 +30,5 @@ doc: all
 	  PPrintRenderer.ml *.mli PPrint.ml
 
 test: all
+	$(OCAMLBUILD) $(MAIN).native
 	./$(MAIN).native
