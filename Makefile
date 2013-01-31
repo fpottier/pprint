@@ -6,7 +6,10 @@ OCAMLFIND  := ocamlfind
 DOCDIR     := doc
 MAIN       := PPrintTest
 TO_BUILD   := PPrintLib.cma PPrintLib.cmxa
-TO_INSTALL := META $(patsubst %,_build/%,$(TO_BUILD)) $(wildcard _build/*.cmx) $(wildcard _build/*.cmi)
+TO_INSTALL := META \
+	$(patsubst %,_build/%,$(TO_BUILD)) \
+	_build/PPrintLib.a \
+	$(wildcard _build/*.cmx) $(wildcard _build/*.cmi)
 
 all:
 	$(OCAMLBUILD) $(TO_BUILD)
