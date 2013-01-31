@@ -1,17 +1,6 @@
 include Makefile
 
-.PHONY: mezzo archive export headers
-
-# --------------------------------------------------------------------------------
-
-# [make mezzo] copies the pprint library into the Mezzo source tree.
-
-MEZZO := $(HOME)/dev/mezzo/src/pprint
-
-mezzo: all
-	rm -rf $(MEZZO)
-	mkdir $(MEZZO)
-	cp -f README AUTHORS LICENSE *.ml *.mli $(MEZZO)
+.PHONY: archive export headers
 
 # --------------------------------------------------------------------------------
 
