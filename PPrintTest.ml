@@ -47,7 +47,7 @@ let document =
       ^^
       twice (break 1)
       ^^
-      flow 1 (words "To install PPrint, type \"make install\". ocamlfind is required.")
+      flow 1 (words "To install PPrint, type \"make -C src install\". ocamlfind is required.")
       ^^
       twice (break 1)
       ^^
