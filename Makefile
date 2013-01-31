@@ -14,7 +14,7 @@ all:
 	$(OCAMLBUILD) $(TO_BUILD)
 
 install: all
-	$(OCAMLFIND) install PPrint $(TO_INSTALL)
+	$(OCAMLFIND) install pprint $(TO_INSTALL)
 
 clean:
 	rm -f *~ $(MAIN).native
