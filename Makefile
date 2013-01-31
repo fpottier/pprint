@@ -5,8 +5,8 @@ OCAMLBUILD := ocamlbuild -use-ocamlfind -cflags "-g" -lflags "-g" -classic-displ
 OCAMLFIND  := ocamlfind
 DOCDIR     := doc
 MAIN       := PPrintTest
-TO_BUILD   := PPrint.cmi PPrint.cmo PPrint.cmx PPrint.$(OBJ)
-TO_INSTALL := META $(patsubst %,_build/%,$(TO_BUILD))
+TO_BUILD   := PPrintLib.cma PPrintLib.cmxa
+TO_INSTALL := META $(patsubst %,_build/%,$(TO_BUILD)) $(wildcard _build/*.cmx) $(wildcard _build/*.cmi)
 
 all:
 	$(OCAMLBUILD) $(TO_BUILD)
