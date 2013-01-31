@@ -57,8 +57,10 @@ val bar: document
 
 (** [precede l x] is [l ^^ x]. *)
 val precede: document -> document -> document
+
 (** [terminate r x] is [x ^^ r]. *)
 val terminate: document -> document -> document
+
 (** [enclose l r x] is [l ^^ x ^^ r]. *)
 val enclose: document -> document -> document -> document
 
@@ -102,7 +104,7 @@ val separate_map: document -> ('a -> document) -> 'a list -> document
 
 (** [separate2 sep last_sep docs] is the concatenation of the documents in the
     list [docs]. The separator [sep] is inserted between every two adjacent
-    documents, except, between the last two documents, where the separator
+    documents, except between the last two documents, where the separator
     [last_sep] is used instead. *)
 val separate2: document -> document -> document list -> document
 
@@ -127,11 +129,11 @@ val arbitrary_string: string -> document
     whitespace is discarded. This code is not UTF-8 aware. *)
 val words: string -> document list
 
-(** [split ok s] splits the string [s] at every occurrence of a character that
-    satisfies the predicate [ok]. The substrings thus obtained are turned into
-    documents, and a list of documents is returned. No information is lost: the
-    concatenation of the documents yields the original string.  This code is
-    not UTF-8 aware. *)
+(** [split ok s] splits the string [s] before and after every occurrence of a
+    character that satisfies the predicate [ok]. The substrings thus obtained
+    are turned into documents, and a list of documents is returned. No
+    information is lost: the concatenation of the documents yields the
+    original string.  This code is not UTF-8 aware. *)
 val split: (char -> bool) -> string -> document list
 
 (** [flow b docs] separates the documents in the list [docs] with breakable

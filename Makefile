@@ -1,6 +1,5 @@
 .PHONY: all install clean doc test
 
-include Makefile.arch
 OCAMLBUILD := ocamlbuild -use-ocamlfind -cflags "-g" -lflags "-g" -classic-display
 OCAMLFIND  := ocamlfind
 DOCDIR     := doc
