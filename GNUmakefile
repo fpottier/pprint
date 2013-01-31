@@ -24,7 +24,7 @@ ARCHIVE  := $(BASE)-$(DATE)
 
 archive: headers all doc
 	rm -rf $(ARCHIVE) $(ARCHIVE).tar.gz
-	mkdir $(ARCHIVE) && cp README AUTHORS LICENSE $(ARCHIVE)
+	mkdir $(ARCHIVE) && cp README AUTHORS LICENSE CHANGES $(ARCHIVE)
 	mkdir $(ARCHIVE)/src && cp *.ml *.mli Makefile META $(ARCHIVE)/src
 	echo version = \"$(DATE)\" >> $(ARCHIVE)/src/META
 	tar cvfz $(ARCHIVE).tar.gz $(ARCHIVE)

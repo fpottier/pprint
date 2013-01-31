@@ -47,6 +47,10 @@ let document =
       ^^
       twice (break 1)
       ^^
+      flow 1 (words "To install PPrint, type \"make install\". ocamlfind is required.")
+      ^^
+      twice (break 1)
+      ^^
       flow 1 (words "The documentation for PPrint is built by \"make doc\" and is found in the file doc/index.html.")
     )
   ^^
