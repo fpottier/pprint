@@ -5,16 +5,14 @@ OCAMLFIND  := ocamlfind
 DOCDIR     := doc
 MAIN       := PPrintTest
 TO_BUILD   := PPrintLib.cma PPrintLib.cmxa
-TO_INSTALL := META \
-	$(patsubst %,_build/%,$(TO_BUILD)) \
-	_build/PPrintLib.a \
-	$(wildcard _build/*.cmx) $(wildcard _build/*.cmi)
 
 all:
 	$(OCAMLBUILD) $(TO_BUILD)
 
 install: all
-	$(OCAMLFIND) install pprint $(TO_INSTALL)
+	$(OCAMLFIND) install pprint META \
+		$(patsubst %,_build/%,$(TO_BUILD)) \
+		_build/PPrintLib.a _build/*.cmx _build/*.cmi
 
 clean:
 	rm -f *~ $(MAIN).native
