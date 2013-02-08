@@ -1,6 +1,6 @@
 include Makefile
 
-.PHONY: archive export headers
+.PHONY: archive export headers billet
 
 # --------------------------------------------------------------------------------
 
@@ -41,3 +41,9 @@ export: archive
 	ssh $(SERVER) "bash -c 'cd $(WEBDIR) && /bin/ln -sf $(ARCHIVE).tar.gz $(BASE).tar.gz'"
 	scp -r doc $(SERVER):$(WEBDIR)
 
+# [make billet] creates the blog entry.
+
+billet: billet.html
+
+%.html: %.markdown
+	pandoc -s $< -c style.css > $@
