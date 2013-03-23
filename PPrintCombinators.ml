@@ -243,19 +243,22 @@ let words s =
   in
   List.rev (skipping [] 0)
 
-let flow b docs =
+let flow_map sep f docs =
   foldli (fun i accu doc ->
     if i = 0 then
-      doc
+      f doc
     else
       accu ^^
       (* This idiom allows beginning a new line if [doc] does not
 	 fit on the current line. *)
-      group (break b ^^ doc)
-  ) empty docs
+      group (sep ^^ f doc)
+  ) empty docs  
+
+let flow sep docs =
+  flow_map sep (fun x -> x) docs
 
 let url s =
-  flow 0 (split (function '/' | '.' -> true | _ -> false) s)
+  flow (break 0) (split (function '/' | '.' -> true | _ -> false) s)
 
 (* ------------------------------------------------------------------------- *)
 
