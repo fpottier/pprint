@@ -136,13 +136,16 @@ val words: string -> document list
     original string.  This code is not UTF-8 aware. *)
 val split: (char -> bool) -> string -> document list
 
-(** [flow b docs] separates the documents in the list [docs] with breakable
-    spaces in such a way that a new line begins whenever a document does not
-    fit on the current line. This is useful for typesetting free-flowing,
-    ragged-right text. The parameter [b] is the number of spaces that must
-    be inserted between two consecutive words (when displayed on the same
-    line). *)
-val flow: int -> document list -> document
+(** [flow sep docs] separates the documents in the list [docs] with the
+    separator [sep] and arranges for a new line to begin whenever a document
+    does not fit on the current line. This is useful for typesetting
+    free-flowing, ragged-right text. A typical choice of [sep] is [break b],
+    where [b] is the number of spaces that must be inserted between two
+    consecutive words (when displayed on the same line). *)
+val flow: document -> document list -> document
+
+(** [flow_map sep f docs] is equivalent to [flow sep (List.map f docs)]. *)
+val flow_map: document -> ('a -> document) -> 'a list -> document
 
 (** [url s] is a possible way of displaying the URL [s]. A potential line
     break is inserted immediately before and immediately after every slash
