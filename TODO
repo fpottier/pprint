@@ -1,0 +1,17 @@
+Max Mouratov <mmouratov@gmail.com> writes:
+
+I'd like to use your PPrint library in the development of a
+proprietary software system, and it is not clear to me whether the
+Cecill-C license would allow me to distribute my software in binary
+form with PPrint linked in statically.
+
+Notoriously, LPGL requires adding a special "static linking" exception
+to the license text in order for libraries written in OCaml to be
+useful in commercial software development. See an example of such
+exception in
+https://bitbucket.org/mrm/mparser/src/d41542b1483f727fa847a25f9fe2e001f2b8d95d/LICENSE.txt?at=default
+
+Could you please clarify whether the license permits to distribute
+binaries statically linked to an unmodified version of PPrint? Could
+you please state it explicitly in the license text?
+
