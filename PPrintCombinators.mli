@@ -154,6 +154,7 @@ val url: string -> document
 
 (** {1 Alignment and indentation} *)
 
+(* TEMPORARY
 (** [align doc] increases the indentation level to reach the current
     column. Thus, this document will be rendered within a box whose
     upper left corner is the current position. *)
@@ -163,6 +164,7 @@ val align: document -> document
    all lines, except the first one, by [n]. Thus, the text in the
    box forms a hanging indent. *)
 val hang: int -> document -> document
+*)
 
 (** [prefix n b left right] has the following flat layout: {[
 left right

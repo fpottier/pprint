@@ -286,13 +286,13 @@ end
 let () =
   Printf.printf "Testing old engine...\n";
   let state = Random.get_state() in
-  let module T = Test1(PPrintEngine) in
+  let module T = Test1(OldPPrintEngine) in
   Random.set_state state;
   Printf.printf "Testing new engine...\n";
-  let module T = Test1(NewPPrintEngine) in
+  let module T = Test1(PPrintEngine) in
 
   Printf.printf "Comparing old and new engines...\n";
-  let module T = Test2(PPrintEngine)(NewPPrintEngine) in
+  let module T = Test2(OldPPrintEngine)(PPrintEngine) in
 
   Gc.major();
   (* The size of the randomly generated documents. *)
@@ -306,8 +306,8 @@ let () =
     let docs = Array.init runs (fun _ -> random n)
   end in
   Printf.printf "Timing old engine...\n";
-  let module T = Time1(PPrintEngine)(D) in
+  let module T = Time1(OldPPrintEngine)(D) in
   Printf.printf "Timing new engine...\n";
-  let module T = Time1(NewPPrintEngine)(D) in
+  let module T = Time1(PPrintEngine)(D) in
   ()
 

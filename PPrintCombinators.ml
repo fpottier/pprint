@@ -264,6 +264,7 @@ let url s =
 
 (* Alignment and indentation. *)
 
+(* TEMPORARY
 let align d =
   column (fun k ->
     nesting (fun i ->
@@ -273,6 +274,7 @@ let align d =
 
 let hang i d =
   align (nest i d)
+*)
 
 let ( !^ ) = string
 
