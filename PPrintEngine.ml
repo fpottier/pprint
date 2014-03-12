@@ -323,7 +323,7 @@ type 'channel state = {
     mutable input1: document;
     mutable input: input;
 
-    (* The renderer's buffer output. *)
+    (* The renderer's buffered output. *)
 
     mutable output: output;
 
