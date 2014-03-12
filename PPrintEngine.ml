@@ -523,7 +523,7 @@ module Renderer (Output : OUTPUT) = struct
 	state.input1 <- f state.column;
 	run stack state
 
-    (* The first piece of input is a [Column] operator. The current
+    (* The first piece of input is a [Nesting] operator. The current
        indentation level is fed into it, so as to produce a document, with
        which we continue. *)
 
