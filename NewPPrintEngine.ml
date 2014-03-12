@@ -292,17 +292,6 @@ let group x = {
    bottom-up, as described above, which allows to render documents without
    backtracking or buffering. *)
 
-(* TEMPORARY *)
-(* The renderer is written in tail-recursive style. Its input consists of an
-   ordered sequence of documents. Each document carries an extra indentation
-   level, akin to an implicit [Nest] constructor, and a ``flattening'' flag,
-   which, if set, means that this document should be printed in flattening
-   mode. *)
-
-type input =
-  | INil
-  | ICons of int * bool * document * input
-
 (* The renderer maintains the following state. This state is partly mutable.
    It is never duplicated; it is just threaded through. *)
 
@@ -327,6 +316,13 @@ type 'channel state = {
     mutable column: int;
 
   }
+
+(* The renderer is written in tail-recursive style. Its explicit continuation
+   can be viewed as a sequence of pending calls to [run]. *)
+
+type cont =
+  | KNil
+  | KCons of int * bool * raw_document * cont
 
 (* ------------------------------------------------------------------------- *)
 
@@ -372,31 +368,35 @@ module Renderer (Output : OUTPUT) = struct
 
   (* The renderer. *)
 
-  let rec run (state : channel state) (indent : int) (flatten : bool) (doc : raw_document) : unit =
+  let rec run (state : channel state) (indent : int) (flatten : bool) (doc : raw_document) (cont : cont) : unit =
     match doc with
 
     | Empty ->
-	()
+	continue state cont
 
     | Char c ->
         Output.char state.channel c;
         state.column <- state.column + 1;
-        assert (ok state flatten)
+        assert (ok state flatten);
+        continue state cont
 
     | String (s, ofs, len) ->
         Output.substring state.channel s ofs len;
         state.column <- state.column + len;
-        assert (ok state flatten)
+        assert (ok state flatten);
+        continue state cont
 
     | FancyString (s, ofs, len, apparent_length) ->
         Output.substring state.channel s ofs len;
         state.column <- state.column + apparent_length;
-        assert (ok state flatten)
+        assert (ok state flatten);
+        continue state cont
 
     | Blank n ->
         blanks state.channel n;
         state.column <- state.column + n;
-        assert (ok state flatten)
+        assert (ok state flatten);
+        continue state cont
 
     | HardLine ->
         (* We cannot be in flattening mode, because a hard line has an [infinity]
@@ -409,20 +409,20 @@ module Renderer (Output : OUTPUT) = struct
 	Output.char state.channel '\n';
 	blanks state.channel indent;
 	state.column <- indent;
-	state.last_indent <- indent
+	state.last_indent <- indent;
+        continue state cont
 
     | IfFlat (doc1, doc2) ->
         (* Pick an appropriate sub-document, based on the current flattening
            mode. *)
-        run state indent flatten (if flatten then doc1 else doc2)
+        run state indent flatten (if flatten then doc1 else doc2) cont
 
     | Cat (doc1, doc2) ->
-        (* TEMPORARY non tail call *)
-        run state indent flatten doc1;
-        run state indent flatten doc2
+        (* Push the second document onto the continuation. *)
+        run state indent flatten doc1 (KCons (indent, flatten, doc2, cont))
 
     | Nest (j, doc) ->
-	run state (indent + j) flatten doc
+	run state (indent + j) flatten doc cont
 
     | Group doc ->
         (* If we already are in flattening mode, stay in flattening mode; we
@@ -435,7 +435,13 @@ module Renderer (Output : OUTPUT) = struct
           let column = state.column ++ doc.requirement in
           column <= state.width && column <= state.last_indent + state.ribbon
         in
-        run state indent flatten doc.raw
+        run state indent flatten doc.raw cont
+
+  and continue state = function
+    | KNil ->
+        ()
+    | KCons (indent, flatten, doc, cont) ->
+        run state indent flatten doc cont
 
   (* This is the renderer's main entry point. *)
 
@@ -446,7 +452,7 @@ module Renderer (Output : OUTPUT) = struct
       channel = channel;
       last_indent = 0;
       column = 0
-    } 0 false doc
+    } 0 false doc KNil
 
 (* ------------------------------------------------------------------------- *)
 

@@ -120,7 +120,7 @@ module Test1 (E : ENGINE) = struct
 
   (* The number of runs. *)
   let runs =
-    1000
+    10000
 
   let () =
     let module R = Generator(E) in
@@ -147,7 +147,7 @@ module Test2 (E1 : ENGINE) (E2 : ENGINE) = struct
 
   (* The number of runs. *)
   let runs =
-    1000
+    10000
 
   let () =
     let module R1 = Generator(E1) in
