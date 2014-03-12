@@ -247,11 +247,11 @@ module Time1 (E : ENGINE) (D : sig val n: int val runs: int val docs : mydoc arr
   open D
 
   let gc =
-    true
+    false
 
   let time f x =
     if gc then
-      Gc.minor();
+      Gc.major();
     let start = Unix.gettimeofday() in
     let y = f x in
     let finish = Unix.gettimeofday() in
@@ -290,6 +290,7 @@ let () =
   Printf.printf "Comparing old and new engines...\n";
   let module T = Test2(PPrintEngine)(NewPPrintEngine) in
 
+  Gc.major();
   (* The size of the randomly generated documents. *)
   let n = 10000 in
   (* The number of runs. *)

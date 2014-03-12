@@ -57,7 +57,7 @@ end
    forms depending on the current flattening mode, and [HardLine], which
    represents a newline character, and causes a failure in flattening mode. *)
 
-type raw_document =
+type document =
 
     (* [Empty] is the empty document. *)
 
@@ -91,7 +91,7 @@ type raw_document =
     (* When in flattening mode, [IfFlat (d1, d2)] turns into the document
        [d1]. When not in flattening mode, it turns into the document [d2]. *)
 
-  | IfFlat of raw_document * raw_document
+  | IfFlat of document * document
 
   (* When in flattening mode, [HardLine] causes a failure, which requires
      backtracking all the way until the stack is empty. When not in flattening
@@ -101,56 +101,59 @@ type raw_document =
 
   | HardLine
 
-  (* [Cat doc1 doc2] is the concatenation of the documents [doc1] and
-     [doc2]. *)
+  (* The following three constructors, [Cat], [Nest], and [Group], store their
+     space requirement. This is the document's apparent length, if printed in
+     flattening mode. This information is computed in a bottom-up manner when
+     the document is constructed. *)
 
-  | Cat of raw_document * raw_document
+  (* In other words, the space requirement is the number of columns that the
+     document needs in order to fit on a single line. We express this value in
+     the set of `integers extended with infinity', and use the value
+     [infinity] to indicate that the document cannot be printed on a single
+     line. *)
 
-    (* [Nest (j, doc)] is the document [doc], in which the indentation level
-       has been increased by [j], that is, in which [j] blanks have been
-       inserted after every newline character. *)
+  (* Storing this information at [Group] nodes is crucial, as it allows us to
+     avoid backtracking and buffering. *)
 
-  | Nest of int * raw_document
+  (* Storing this information at other nodes allows the function [requirement]
+     to operate in constant time. This means that the bottom-up computation of
+     requirements takes linear time. *)
 
-    (* [Group doc] represents an alternative: it is either a flattened form of
-       [doc], in which occurrences of [Group] disappear and occurrences of
-       [IfFlat] resolve to their left branch, or [doc] itself. *)
+  (* [Cat (req, doc1, doc2)] is the concatenation of the documents [doc1] and
+     [doc2]. The space requirement [req] is the sum of the requirements of
+     [doc1] and [doc2]. *)
 
-  | Group of document
+  | Cat of requirement * document * document
+
+  (* [Nest (req, j, doc)] is the document [doc], in which the indentation
+     level has been increased by [j], that is, in which [j] blanks have been
+     inserted after every newline character. The space requirement [req] is
+     the same as the requirement of [doc]. *)
+
+  | Nest of requirement * int * document
+
+  (* [Group (req, doc)] represents an alternative: it is either a flattened
+     form of [doc], in which occurrences of [Group] disappear and occurrences
+     of [IfFlat] resolve to their left branch, or [doc] itself. The space
+     requirement [req] is the same as the requirement of [doc]. *)
+
+  | Group of requirement * document
 
   (* TEMPORARY make [align] primitive *)
 
-(* We distinguish between raw documents, as defined above, and documents,
-   which carry additional information. This information is computed in a
-   bottom-up manner when the document is constructed. *)
-
-(* Crucially, the argument carried by [Group] is a document, as opposed to
-   a raw document. This means that this additional information is stored
-   at every [Group] node, where it allows us to avoid backtracking and
-   buffering. *)
-
-and document = {
-  (* The underlying raw document. *)
-  raw: raw_document;
-  (* The apparent length of this document, if printed in flattening mode.
-     In other words, this is the number of columns that this document
-     needs in order to fit on a single line. We express this value in
-     the set of `integers extended with infinity', and use the value
-     [infinity] to indicate that this document cannot be printed on a
-     single line. *)
-  requirement: int; (* with infinity *)
-}
+and requirement =
+    int (* with infinity *)
 
 (* ------------------------------------------------------------------------- *)
 
 (* Infinity is encoded as [max_int]. *)
 
-let infinity =
+let infinity : requirement =
   max_int
 
 (* Addition of integers with infinity. *)
 
-let (++) x y =
+let (++) (x : requirement) (y : requirement) : requirement =
   if x = infinity || y = infinity then
     infinity
   else
@@ -158,19 +161,47 @@ let (++) x y =
 
 (* ------------------------------------------------------------------------- *)
 
+(* Retrieving or computing the space requirement of a document. *)
+
+let rec requirement = function
+  | Empty ->
+      0
+  | Char _ ->
+      1
+  | String (_, _, len)
+  | FancyString (_, _, _, len)
+  | Blank len ->
+      len
+  | IfFlat (doc1, _) ->
+      (* In flattening mode, the requirement of [ifflat x y] is just the
+         requirement of its flat version, [x]. *)
+      (* The smart constructor [ifflat] ensures that [IfFlat] is never nested
+         in the left-hand side of [IfFlat], so this recursive call is not a
+         problem; the function [requirement] has constant time complexity. *)
+      requirement doc1
+  | HardLine ->
+      (* A hard line cannot be printed in flattening mode. *)
+      infinity
+  | Cat (req, _, _)
+  | Nest (req, _, _)
+  | Group (req, _) ->
+      (* These nodes store their requirement -- which is computed when the
+         node is constructed -- so as to allow us to answer in constant time
+         here. *)
+      req
+
+(* ------------------------------------------------------------------------- *)
+
 (* The above algebraic data type is not exposed to the user. Instead, we
    expose the following functions. These functions construct a raw document
    and compute its requirement, so as to obtain a document. *)
 
-let empty = {
-  raw = Empty;
-  requirement = 0
-}
+let empty =
+  Empty
 
-let char c = {
-  raw = (assert (c <> '\n'); Char c);
-  requirement = 1
-}
+let char c =
+  assert (c <> '\n');
+  Char c
 
 let space =
   char ' '
@@ -178,10 +209,8 @@ let space =
 let substring s ofs len =
   if len = 0 then
     empty
-  else {
-    raw = String (s, ofs, len);
-    requirement = len
-  }
+  else
+    String (s, ofs, len)
 
 let string s =
   substring s 0 (String.length s)
@@ -189,10 +218,8 @@ let string s =
 let fancysubstring s ofs len apparent_length =
   if len = 0 then
     empty
-  else {
-    raw = FancyString (s, ofs, len, apparent_length);
-    requirement = apparent_length
-  }
+  else
+    FancyString (s, ofs, len, apparent_length)
 
 let fancystring s apparent_length =
   fancysubstring s 0 (String.length s) apparent_length
@@ -214,11 +241,8 @@ let utf8_length s =
 let utf8string s =
   fancystring s (utf8_length s)
 
-let hardline = {
-  raw = HardLine;
-  requirement = infinity
-    (* a hard line cannot be printed in flattening mode *)
-}
+let hardline =
+  HardLine
 
 let blank n =
   match n with
@@ -227,17 +251,15 @@ let blank n =
   | 1 ->
       space
   | _ ->
-      {
-        raw = Blank n;
-        requirement = n
-      }
+      Blank n
 
-let ifflat x y = {
-  raw = IfFlat (x.raw, y.raw);
-  requirement = x.requirement
-    (* in flattening mode, the requirement of [ifflat x y] is just the
-       requirement of its flat version, [x] *)
-}
+let ifflat doc1 doc2 =
+  (* Avoid nesting [IfFlat] in the left-hand side of [IfFlat], as this
+     is redundant. *)
+  match doc1 with
+  | IfFlat (doc1, _)
+  | doc1 ->
+      IfFlat (doc1, doc2)
 
 let internal_break i =
   ifflat (blank i) hardline
@@ -258,28 +280,20 @@ let break i =
       internal_break i
 
 let (^^) x y =
-  match x.raw, y.raw with
+  match x, y with
   | Empty, _ ->
       y
   | _, Empty ->
       x
   | _, _ ->
-      {
-        raw = Cat (x.raw, y.raw);
-        requirement = x.requirement ++ y.requirement
-      }
+      Cat (requirement x ++ requirement y, x, y)
 
-let nest i x = {
-  raw = (assert (i >= 0); Nest (i, x.raw));
-  requirement = x.requirement
-    (* [Nest] is ignored in flattening mode *)
-}
+let nest i x =
+  assert (i >= 0);
+  Nest (requirement x, i, x)
 
-let group x = {
-  raw = Group x;
-  requirement = x.requirement
-    (* [Group] is ignored in flattening mode *)
-}
+let group x =
+  Group (requirement x, x)
 
 (* ------------------------------------------------------------------------- *)
 
@@ -322,7 +336,7 @@ type 'channel state = {
 
 type cont =
   | KNil
-  | KCons of int * bool * raw_document * cont
+  | KCons of int * bool * document * cont
 
 (* ------------------------------------------------------------------------- *)
 
@@ -368,7 +382,7 @@ module Renderer (Output : OUTPUT) = struct
 
   (* The renderer. *)
 
-  let rec run (state : channel state) (indent : int) (flatten : bool) (doc : raw_document) (cont : cont) : unit =
+  let rec run (state : channel state) (indent : int) (flatten : bool) (doc : document) (cont : cont) : unit =
     match doc with
 
     | Empty ->
@@ -417,14 +431,14 @@ module Renderer (Output : OUTPUT) = struct
            mode. *)
         run state indent flatten (if flatten then doc1 else doc2) cont
 
-    | Cat (doc1, doc2) ->
+    | Cat (_, doc1, doc2) ->
         (* Push the second document onto the continuation. *)
         run state indent flatten doc1 (KCons (indent, flatten, doc2, cont))
 
-    | Nest (j, doc) ->
+    | Nest (_, j, doc) ->
 	run state (indent + j) flatten doc cont
 
-    | Group doc ->
+    | Group (req, doc) ->
         (* If we already are in flattening mode, stay in flattening mode; we
            are committed to it. If we are not already in flattening mode, we
            have a choice of entering flattening mode. We enter this mode only
@@ -432,10 +446,10 @@ module Renderer (Output : OUTPUT) = struct
            width or ribbon width constraints. Thus, we never backtrack. *)
         let flatten =
           flatten ||
-          let column = state.column ++ doc.requirement in
+          let column = state.column ++ req in
           column <= state.width && column <= state.last_indent + state.ribbon
         in
-        run state indent flatten doc.raw cont
+        run state indent flatten doc cont
 
   and continue state = function
     | KNil ->
@@ -445,7 +459,7 @@ module Renderer (Output : OUTPUT) = struct
 
   (* This is the renderer's main entry point. *)
 
-  let pretty rfrac width channel { raw = doc } =
+  let pretty rfrac width channel doc =
     run {
       width = width;
       ribbon = max 0 (min width (truncate (float_of_int width *. rfrac)));
@@ -458,7 +472,7 @@ module Renderer (Output : OUTPUT) = struct
 
 (* The compact rendering algorithm. *)
 
-  let compact channel { raw = doc } =
+  let compact channel doc =
 
     let rec scan = function
       | Empty ->
@@ -473,12 +487,12 @@ module Renderer (Output : OUTPUT) = struct
 	  blanks channel n
       | HardLine ->
 	  Output.char channel '\n'
-      | Cat (doc1, doc2) ->
+      | Cat (_, doc1, doc2) ->
 	  scan doc1;
 	  scan doc2
       | IfFlat (doc, _)
-      | Nest (_, doc)
-      | Group { raw = doc } ->
+      | Nest (_, _, doc)
+      | Group (_, doc) ->
 	  scan doc
     in
 
