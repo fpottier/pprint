@@ -28,6 +28,34 @@ end
 
 (* ------------------------------------------------------------------------- *)
 
+(* We use our own abstract syntax of documents. We produce random documents
+   in this syntax first, then (as part of the timed test) translate them to
+   the engine's syntax. This allows timing the engine's document construction
+   code too. *)
+
+type mydoc =
+  | MyEmpty
+  | MyChar of char
+  | MyString of string
+  | MySubString of string * int * int
+  | MyUtf8String of string
+  | MyHardLine
+  | MyBlank of int
+  | MyBreak of int
+  | MyCat of mydoc * mydoc
+  | MyNest of int * mydoc
+  | MyGroup of mydoc
+  | MyIfFlat of mydoc * mydoc
+
+(* ------------------------------------------------------------------------- *)
+
+(* [measure v] measures the size of an OCaml value [v] in memory. *)
+
+let measure v =
+  String.length (Marshal.to_string v [ Marshal.No_sharing ])
+
+(* ------------------------------------------------------------------------- *)
+
 (* [split n] produces two numbers [n1] and [n2] comprised between [0] and [n]
    (inclusive) whose sum is [n]. *)
 
@@ -70,38 +98,69 @@ let pick wxs =
 
 (* A random document generator. *)
 
-module Generator (E : ENGINE) = struct
+let leaf =
+  [|
+    MyChar 'c';
+    MyString "hello";
+    MySubString ("the cat", 4, 3);
+    MyUtf8String "étoile";
+    MyHardLine;
+    MyBlank 2;
+    MyBreak 2
+  |]
+
+let rec random (n : int) : mydoc =
+  (* If the budget is 0, produce an empty document. *)
+  if n = 0 then
+    MyEmpty
+  (* If the budget is 1, produce a leaf. *)
+  else if n = 1 then
+    choose leaf
+  (* Otherwise, decrement the budget, and produce a node of nonzero
+     arity, spending the rest of the budget on the children. *)
+  else
+    let n = n - 1 in
+    Lazy.force (pick [
+      10, lazy (let n1, n2 = split n in MyCat (random n1, random n2));
+       2, lazy (MyNest (2, random n));
+      10, lazy (MyGroup (random n));
+       2, lazy (let n1, n2 = split n in MyIfFlat (random n1, random n2))
+    ])
+
+(* ------------------------------------------------------------------------- *)
+
+(* Building documents for a particular engine. *)
+
+module Build (E : ENGINE) = struct
 
   open E
 
-  let leaf =
-    [|
-      char 'c';
-      string "hello";
-      substring "the cat" 4 3;
-      utf8string "étoile";
-      hardline;
-      blank 2;
-      break 2
-    |]
-
-  let rec random (n : int) : document =
-    (* If the budget is 0, produce an empty document. *)
-    if n = 0 then
-      empty
-    (* If the budget is 1, produce a leaf. *)
-    else if n = 1 then
-      choose leaf
-    (* Otherwise, decrement the budget, and produce a node of nonzero
-       arity, spending the rest of the budget on the children. *)
-    else
-      let n = n - 1 in
-      Lazy.force (pick [
-        10, lazy (let n1, n2 = split n in random n1 ^^ random n2);
-         2, lazy (nest 2 (random n));
-        10, lazy (group (random n));
-         2, lazy (let n1, n2 = split n in ifflat (random n1) (random n2))
-      ])
+  let rec build (doc : mydoc) : document =
+    match doc with
+    | MyEmpty ->
+        empty
+    | MyChar c ->
+        char c
+    | MyString s ->
+        string s
+    | MySubString (s, ofs, len) ->
+        substring s ofs len
+    | MyUtf8String s ->
+        utf8string s
+    | MyHardLine ->
+        hardline
+    | MyBlank b ->
+        blank b
+    | MyBreak b ->
+        break b
+    | MyCat (doc1, doc2) ->
+        build doc1 ^^ build doc2
+    | MyNest (i, doc) ->
+        nest i (build doc)
+    | MyGroup doc ->
+        group (build doc)
+    | MyIfFlat (doc1, doc2) ->
+        ifflat (build doc1) (build doc2)
 
 end
 
@@ -132,15 +191,18 @@ module Test1 (E : ENGINE) = struct
     10000
 
   let () =
-    let module R = Generator(E) in
+    let module B = Build(E) in
+    let s = ref 0 in
     for r = 1 to runs do
-      let document = R.random n in
+      let document = B.build (random n) in
+      s := !s + measure document;
       let buffer = Buffer.create 32768 in
       ToBuffer.pretty rfrac width buffer document;
       let buffer = Buffer.create 32768 in
       ToBuffer.compact buffer document
     done;
-    Printf.printf "Test 1: success.\n%!"
+    let average = float_of_int !s /. float_of_int runs in
+    Printf.printf "Test 1: success. Average document size: %d bytes.\n%!" (truncate average)
 
 end
 
@@ -159,17 +221,12 @@ module Test2 (E1 : ENGINE) (E2 : ENGINE) = struct
     10000
 
   let () =
-    let module R1 = Generator(E1) in
-    let module R2 = Generator(E2) in
+    let module B1 = Build(E1) in
+    let module B2 = Build(E2) in
     for r = 1 to runs do
-      (* The two engines have distinct abstract types of documents.
-         This creates a difficulty: we must produce the same random
-         document in two different forms. We achieve this by saving
-         and setting the state of the random generator. *)
-      let state = Random.get_state() in
-      let document1 = R1.random n in
-      Random.set_state state;
-      let document2 = R2.random n in
+      let document = random n in
+      let document1 = B1.build document in
+      let document2 = B2.build document in
       let buffer1 = Buffer.create 32768 in
       E1.ToBuffer.pretty rfrac width buffer1 document1;
       let buffer2 = Buffer.create 32768 in
@@ -184,30 +241,36 @@ end
 
 (* Timing an engine, alone. *)
 
-module Time1 (E : ENGINE) = struct
+module Time1 (E : ENGINE) (D : sig val n: int val runs: int val docs : mydoc array end) = struct
 
   open E
+  open D
 
-  (* The size of the randomly generated documents. *)
-  let n =
-    10000
+  let gc =
+    true
 
-  (* The number of runs. *)
-  let runs =
-    10000
+  let time f x =
+    if gc then
+      Gc.minor();
+    let start = Unix.gettimeofday() in
+    let y = f x in
+    let finish = Unix.gettimeofday() in
+    y, finish -. start
 
   let () =
-    let module R = Generator(E) in
-    Printf.printf "Time 1: generating %d documents of size %d...\n%!" runs n;
-    let docs = Array.init runs (fun _ -> R.random n) in
+    let module B = Build(E) in
+    Printf.printf "Time: building documents...\n%!";
+    let docs, duration = time (fun () -> Array.map B.build docs) () in
+    Printf.printf "Time: built %d documents of size %d in %.2f seconds.\n%!" runs n duration;
     let buffer = Buffer.create 32768 in
-    let start = Unix.gettimeofday() in
-    Array.iter (fun document ->
-      ToBuffer.pretty rfrac width buffer document;
-      Buffer.clear buffer
-    ) docs;
-    let finish = Unix.gettimeofday() in
-    Printf.printf "Time 1: rendered %d documents of size %d in %.2f seconds.\n%!" runs n (finish -. start)
+    Printf.printf "Time: rendering documents...\n%!";
+    let (), duration = time (fun () ->
+      Array.iter (fun document ->
+        ToBuffer.pretty rfrac width buffer document;
+        Buffer.clear buffer
+      ) docs
+    ) () in
+    Printf.printf "Time: rendered %d documents of size %d in %.2f seconds.\n%!" runs n duration
 
 end
 
@@ -216,9 +279,30 @@ end
 (* Main. *)
 
 let () =
+
+  Printf.printf "Testing old engine...\n";
+  let state = Random.get_state() in
+  let module T = Test1(PPrintEngine) in
+  Random.set_state state;
+  Printf.printf "Testing new engine...\n";
   let module T = Test1(NewPPrintEngine) in
+
+  Printf.printf "Comparing old and new engines...\n";
   let module T = Test2(PPrintEngine)(NewPPrintEngine) in
-  let module T = Time1(PPrintEngine) in
-  let module T = Time1(NewPPrintEngine) in
+
+  (* The size of the randomly generated documents. *)
+  let n = 10000 in
+  (* The number of runs. *)
+  let runs = 1000 in
+  Printf.printf "Generating %d documents of size %d...\n%!" runs n;
+  let module D = struct
+    let n = n
+    let runs = runs
+    let docs = Array.init runs (fun _ -> random n)
+  end in
+  Printf.printf "Timing old engine...\n";
+  let module T = Time1(PPrintEngine)(D) in
+  Printf.printf "Timing new engine...\n";
+  let module T = Time1(NewPPrintEngine)(D) in
   ()
 
