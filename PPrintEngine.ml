@@ -101,10 +101,10 @@ type document =
 
   | HardLine
 
-  (* The following three constructors, [Cat], [Nest], and [Group], store their
-     space requirement. This is the document's apparent length, if printed in
-     flattening mode. This information is computed in a bottom-up manner when
-     the document is constructed. *)
+  (* The following constructors store their space requirement. This is the
+     document's apparent length, if printed in flattening mode. This
+     information is computed in a bottom-up manner when the document is
+     constructed. *)
 
   (* In other words, the space requirement is the number of columns that the
      document needs in order to fit on a single line. We express this value in
@@ -139,7 +139,12 @@ type document =
 
   | Group of requirement * document
 
-  (* TEMPORARY make [align] primitive *)
+  (* [Align (req, doc)] increases the indentation level to reach the current
+     column.  Thus, the document [doc] is rendered within a box whose upper
+     left corner is the current position. The space requirement [req] is the
+     same as the requirement of [doc]. *)
+
+  | Align of requirement * document
 
 and requirement =
     int (* with infinity *)
@@ -189,7 +194,8 @@ let rec requirement = function
       infinity
   | Cat (req, _, _)
   | Nest (req, _, _)
-  | Group (req, _) ->
+  | Group (req, _) 
+  | Align (req, _) ->
       (* These nodes store their requirement -- which is computed when the
          node is constructed -- so as to allow us to answer in constant time
          here. *)
@@ -299,6 +305,9 @@ let nest i x =
 
 let group x =
   Group (requirement x, x)
+
+let align x =
+  Align (requirement x, x)
 
 (* ------------------------------------------------------------------------- *)
 
@@ -456,6 +465,14 @@ module Renderer (Output : OUTPUT) = struct
         in
         run state indent flatten doc cont
 
+    | Align (_, doc) ->
+        (* Get the current column. *)
+        let k = state.column in
+        (* Get the last indent. *)
+        let i = state.last_indent in
+        (* Act as [Nest (_, k - i, doc)]. *)
+        run state (indent + k - i) flatten doc cont
+
   and continue state = function
     | KNil ->
         ()
@@ -497,7 +514,8 @@ module Renderer (Output : OUTPUT) = struct
 	  scan doc2
       | IfFlat (doc, _)
       | Nest (_, _, doc)
-      | Group (_, doc) ->
+      | Group (_, doc)
+      | Align (_, doc) ->
 	  scan doc
     in
 

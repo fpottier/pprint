@@ -97,6 +97,11 @@ val group: document -> document
     equivalent. *)
 val ifflat: document -> document -> document
 
+(** [align doc] is the document [doc], in which the indentation level has been
+    increased so as to reach the current column. Thus, [doc] is rendered
+    within a box whose upper left corner is the current position. *)
+val align: document -> document
+
 (** {1 Rendering documents} *)
 
 (** This renderer sends its output into an output channel. *)
