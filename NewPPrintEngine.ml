@@ -159,6 +159,11 @@ let (++) (x : requirement) (y : requirement) : requirement =
   else
     x + y
 
+(* Comparison between an integer with infinity and a normal integer. *)
+
+let (<==) (x : requirement) (y : int) =
+  x <= y
+
 (* ------------------------------------------------------------------------- *)
 
 (* Retrieving or computing the space requirement of a document. *)
@@ -447,7 +452,7 @@ module Renderer (Output : OUTPUT) = struct
         let flatten =
           flatten ||
           let column = state.column ++ req in
-          column <= state.width && column <= state.last_indent + state.ribbon
+          column <== state.width && column <== state.last_indent + state.ribbon
         in
         run state indent flatten doc cont
 
