@@ -1,3 +1,5 @@
+Extend PPrintBench to also try non-random documents of large size.
+
 Max Mouratov <mmouratov@gmail.com> writes:
 
 I'd like to use your PPrint library in the development of a

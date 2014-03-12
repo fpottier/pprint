@@ -1,9 +1,10 @@
-.PHONY: all install clean doc test
+.PHONY: all install clean doc test bench
 
 OCAMLBUILD := ocamlbuild -use-ocamlfind -cflags "-g" -lflags "-g" -classic-display
 OCAMLFIND  := ocamlfind
 DOCDIR     := doc
 MAIN       := PPrintTest
+BENCH      := PPrintBench
 TO_BUILD   := PPrintLib.cma PPrintLib.cmxa
 
 all:
@@ -15,7 +16,7 @@ install: all
 		_build/PPrintLib.a _build/*.cmx _build/*.cmi
 
 clean:
-	rm -f *~ $(MAIN).native
+	rm -f *~
 	rm -rf doc
 	$(OCAMLBUILD) -clean
 
@@ -32,3 +33,8 @@ doc: all
 test: all
 	$(OCAMLBUILD) $(MAIN).native
 	./$(MAIN).native
+
+bench: all
+	$(OCAMLBUILD) -tag use_unix $(BENCH).native
+	./$(BENCH).native
+
