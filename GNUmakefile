@@ -1,6 +1,6 @@
 include Makefile
 
-.PHONY: archive export headers billet
+.PHONY: archive export headers billet bench
 
 # --------------------------------------------------------------------------------
 
@@ -41,9 +41,22 @@ export: archive
 	ssh $(SERVER) "bash -c 'cd $(WEBDIR) && /bin/ln -sf $(ARCHIVE).tar.gz $(BASE).tar.gz'"
 	scp -r doc $(SERVER):$(WEBDIR)
 
+# --------------------------------------------------------------------------------
+
 # [make billet] creates the blog entry.
 
 billet: billet.html
 
 %.html: %.markdown
 	pandoc -s $< -c style.css > $@
+
+# --------------------------------------------------------------------------------
+
+# [make bench] runs a performance benchmark.
+
+OCAMLBUILD := ocamlbuild -use-ocamlfind -cflags "-g" -lflags "-g" -classic-display
+
+bench: all
+	$(OCAMLBUILD) -tag use_unix PPrintBench.native
+	time ./PPrintBench.native
+
