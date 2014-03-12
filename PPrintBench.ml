@@ -49,10 +49,11 @@ type mydoc =
 
 (* ------------------------------------------------------------------------- *)
 
-(* [measure v] measures the size of an OCaml value [v] in memory. *)
+(* [measure v] measures the size of an OCaml value [v] in bytes. *)
 
 let measure v =
-  String.length (Marshal.to_string v [])
+  (* String.length (Marshal.to_string v []) *)
+  Size.size_b v
 
 (* ------------------------------------------------------------------------- *)
 
