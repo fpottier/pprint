@@ -201,8 +201,9 @@ module Test1 (E : ENGINE) = struct
       let buffer = Buffer.create 32768 in
       ToBuffer.compact buffer document
     done;
+    Printf.printf "Test 1: success.\n%!";
     let average = float_of_int !s /. float_of_int runs in
-    Printf.printf "Test 1: success. Average document size: %d bytes.\n%!" (truncate average)
+    Printf.printf "Average document size: %d bytes.\n%!" (truncate average)
 
 end
 
@@ -262,6 +263,9 @@ module Time1 (E : ENGINE) (D : sig val n: int val runs: int val docs : mydoc arr
     Printf.printf "Time: building documents...\n%!";
     let docs, duration = time (fun () -> Array.map B.build docs) () in
     Printf.printf "Time: built %d documents of size %d in %.2f seconds.\n%!" runs n duration;
+    let size = Array.fold_left (fun accu doc -> accu + measure doc) 0 docs in
+    let average = float_of_int size /. float_of_int runs in
+    Printf.printf "Average document size: %d bytes.\n%!" (truncate average);
     let buffer = Buffer.create 32768 in
     Printf.printf "Time: rendering documents...\n%!";
     let (), duration = time (fun () ->
@@ -279,7 +283,6 @@ end
 (* Main. *)
 
 let () =
-
   Printf.printf "Testing old engine...\n";
   let state = Random.get_state() in
   let module T = Test1(PPrintEngine) in
