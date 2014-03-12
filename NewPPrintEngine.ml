@@ -377,25 +377,25 @@ module Renderer (Output : OUTPUT) = struct
     | Char c ->
         Output.char state.channel c;
         state.column <- state.column + 1;
-        assert (ok state flatten);
+        (* assert (ok state flatten); *)
         continue state cont
 
     | String (s, ofs, len) ->
         Output.substring state.channel s ofs len;
         state.column <- state.column + len;
-        assert (ok state flatten);
+        (* assert (ok state flatten); *)
         continue state cont
 
     | FancyString (s, ofs, len, apparent_length) ->
         Output.substring state.channel s ofs len;
         state.column <- state.column + apparent_length;
-        assert (ok state flatten);
+        (* assert (ok state flatten); *)
         continue state cont
 
     | Blank n ->
         blanks state.channel n;
         state.column <- state.column + n;
-        assert (ok state flatten);
+        (* assert (ok state flatten); *)
         continue state cont
 
     | HardLine ->
