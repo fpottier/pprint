@@ -52,7 +52,7 @@ type mydoc =
 (* [measure v] measures the size of an OCaml value [v] in memory. *)
 
 let measure v =
-  String.length (Marshal.to_string v [ Marshal.No_sharing ])
+  String.length (Marshal.to_string v [])
 
 (* ------------------------------------------------------------------------- *)
 
