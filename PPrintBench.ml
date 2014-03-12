@@ -42,6 +42,12 @@ let split n =
 let choose xs =
   List.nth xs (Random.int (List.length xs))
 
+(* [choose xs] randomly and uniformly chooses between the elements of the
+   array [xs]. *)
+
+let choose xs =
+  Array.unsafe_get xs (Random.int (Array.length xs))
+
 (* [pick] is analogous, but each element comes with a relative integer weight. *)
 
 let pick wxs =
@@ -68,21 +74,24 @@ module Generator (E : ENGINE) = struct
 
   open E
 
+  let leaf =
+    [|
+      char 'c';
+      string "hello";
+      substring "the cat" 4 3;
+      utf8string "étoile";
+      hardline;
+      blank 2;
+      break 2
+    |]
+
   let rec random (n : int) : document =
     (* If the budget is 0, produce an empty document. *)
     if n = 0 then
       empty
     (* If the budget is 1, produce a leaf. *)
     else if n = 1 then
-      choose [
-        char 'c';
-        string "hello";
-        substring "the cat" 4 3;
-        utf8string "étoile";
-        hardline;
-        blank 2;
-        break 2
-      ]
+      choose leaf
     (* Otherwise, decrement the budget, and produce a node of nonzero
        arity, spending the rest of the budget on the children. *)
     else
