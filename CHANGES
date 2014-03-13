@@ -1,2 +1,11 @@
+2014/03/13
+New (simpler) pretty-printing engine. The representation of documents in
+memory is slightly larger; document construction is perhaps slightly slower,
+while rendering is significantly faster. (Construction dominates rendering.)
+The rendering speed is now guaranteed to be independent of the width
+parameter. The price to pay for this simplification is that the primitive
+document constructors [column] and [nesting] are no longer supported. The
+API is otherwise unchanged.
+
 2013/01/31
 First official release of PPrint.
