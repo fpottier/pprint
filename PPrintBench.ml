@@ -296,26 +296,33 @@ end
 
 (* Main. *)
 
-let () =
+let test1 () =
+  (* Testing both engines on the same set of documents. *)
   Printf.printf "Testing old engine...\n";
   let state = Random.get_state() in
   let module T = Test1(OldPPrintEngine) in
   Random.set_state state;
   Printf.printf "Testing new engine...\n";
   let module T = Test1(PPrintEngine) in
+  ()
 
+let test2 () =
+  (* Comparing the two engines. *)
   Printf.printf "Comparing old and new engines...\n";
   let module T = Test2(OldPPrintEngine)(PPrintEngine) in
+  ()
 
-  Gc.major();
-  (* The size of the randomly generated documents. *)
-  let n = 10000 in
-  (* The number of runs. *)
-  let runs = 1000 in
-  Printf.printf "Generating %d documents of size %d...\n%!" runs n;
+let test3 () =
+  (* The timing test. Best to run it separately on each engine
+     (in two different processes), as there are otherwise GC
+     effects. If a major GC is triggered, the timing test is
+     severely affected. *)
   let module D = struct
-    let n = n
-    let runs = runs
+    (* The size of the randomly generated documents. *)
+    let n = 10000
+    (* The number of runs. *)
+    let runs = 1000
+    let () = Printf.printf "Generating %d documents of size %d...\n%!" runs n
     let docs = Array.init runs (fun _ -> random n)
   end in
   Printf.printf "Timing old engine...\n";
@@ -323,4 +330,7 @@ let () =
   Printf.printf "Timing new engine...\n";
   let module T = Time1(PPrintEngine)(D) in
   ()
+
+let () =
+  test3()
 
