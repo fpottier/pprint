@@ -28,6 +28,7 @@ archive: headers all doc
 	mkdir $(ARCHIVE)/src && cp *.ml *.mli *.mllib Makefile META $(ARCHIVE)/src
 	echo version = \"$(DATE)\" >> $(ARCHIVE)/src/META
 	tar -c -v -z -f $(ARCHIVE).tar.gz -X .exclude $(ARCHIVE)
+	md5sum $(ARCHIVE).tar.gz
 
 # --------------------------------------------------------------------------------
 
