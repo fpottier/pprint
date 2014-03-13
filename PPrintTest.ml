@@ -15,6 +15,9 @@ open PPrint
 
 (* This is a test file. It is not, strictly speaking, part of the library. *)
 
+let paragraph (s : string) =
+  flow (break 1) (words s)
+
 let document =
   prefix 2 1
     (string "TITLE:")
@@ -31,10 +34,10 @@ let document =
   prefix 2 1
     (string "ABSTRACT:")
     (
-      flow (break 1) (words "This is an adaptation of Daan Leijen's \"PPrint\" library,
+      paragraph "This is an adaptation of Daan Leijen's \"PPrint\" library,
         which itself is based on the ideas developed by Philip Wadler in
         \"A Prettier Printer\". For more information about Wadler's and Leijen's work,
-        please consult the following references:")
+        please consult the following references:"
       ^^
       nest 2 (
 	twice (break 1)
@@ -47,11 +50,11 @@ let document =
       ^^
       twice (break 1)
       ^^
-      flow (break 1) (words "To install PPrint, type \"make -C src install\". ocamlfind is required.")
+      paragraph "To install PPrint, type \"make -C src install\". ocamlfind is required."
       ^^
       twice (break 1)
       ^^
-      flow (break 1) (words "The documentation for PPrint is built by \"make doc\" and is found in the file doc/index.html.")
+      paragraph "The documentation for PPrint is built by \"make doc\" and is found in the file doc/index.html."
     )
   ^^
   hardline
