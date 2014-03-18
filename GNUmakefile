@@ -39,7 +39,7 @@ WEBDIR := public_html/$(BASE)
 
 export: archive
 	scp $(ARCHIVE).tar.gz $(SERVER):$(WEBDIR)
-	ssh $(SERVER) "bash -c 'cd $(WEBDIR) && /bin/ln -sf $(ARCHIVE).tar.gz $(BASE).tar.gz'"
+	ssh $(SERVER) "bash -c 'cd $(WEBDIR) && /bin/ln -sf $(ARCHIVE).tar.gz $(BASE).tar.gz && rm -rf doc'"
 	scp -r doc $(SERVER):$(WEBDIR)
 
 # --------------------------------------------------------------------------------
