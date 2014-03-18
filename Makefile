@@ -27,7 +27,7 @@ doc: all
 	  -I _build \
 	  -d $(DOCDIR) \
 	  -charset utf8 \
-	  PPrintRenderer.ml *.mli PPrint.ml
+	  PPrintRenderer.ml PPrintEngine.mli PPrintCombinators.mli PPrintOCaml.mli PPrint.ml
 
 test: all
 	$(OCAMLBUILD) $(MAIN).native
