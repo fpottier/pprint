@@ -1,3 +1,15 @@
+Si un groupe a un req infini (i.e. il contient un hardline) alors
+il est inutile de construire un Group. Améliorer le smart constructor.
+
+Pourrait-on aller plus loin sur la gestion des hardlines? Découper
+un document en liste de sous-documents sans hardlines, séparés par
+des hardlines?
+
+Réfléchir à un combinateur d'auto-découpage pour B. Canou.
+
+Réfléchir aussi à un combinateur Lazy. Mais serait utile seulement
+si pas utilisé dans un groupe?
+
 Try to speed up the random generator.
   choose, applied to a list, is too slow: use an array?
   avoid building n suspension when only one will be forced?
