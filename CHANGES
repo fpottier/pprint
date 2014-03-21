@@ -1,3 +1,6 @@
+2014/03/21
+Minor optimisation in the smart constructor [group].
+
 2014/03/13
 New (simpler) pretty-printing engine. The representation of documents in
 memory is slightly larger; document construction is perhaps slightly slower,

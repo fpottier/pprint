@@ -304,7 +304,12 @@ let nest i x =
   Nest (requirement x, i, x)
 
 let group x =
-  Group (requirement x, x)
+  let req = requirement x in
+  (* Minor optimisation: an infinite requirement dissolves a group. *)
+  if req = infinity then
+    x
+  else
+    Group (req, x)
 
 let align x =
   Align (requirement x, x)

@@ -1,6 +1,3 @@
-Si un groupe a un req infini (i.e. il contient un hardline) alors
-il est inutile de construire un Group. Améliorer le smart constructor.
-
 Pourrait-on aller plus loin sur la gestion des hardlines? Découper
 un document en liste de sous-documents sans hardlines, séparés par
 des hardlines?
