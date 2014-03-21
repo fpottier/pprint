@@ -312,7 +312,9 @@ let test2 () =
   let module T = Test2(OldPPrintEngine)(PPrintEngine) in
   ()
 
-let test3 () =
+type engine = Old | New
+
+let test3 engine =
   (* The timing test. Best to run it separately on each engine
      (in two different processes), as there are otherwise GC
      effects. If a major GC is triggered, the timing test is
@@ -325,12 +327,17 @@ let test3 () =
     let () = Printf.printf "Generating %d documents of size %d...\n%!" runs n
     let docs = Array.init runs (fun _ -> random n)
   end in
-  Printf.printf "Timing old engine...\n";
-  let module T = Time1(OldPPrintEngine)(D) in
-  Printf.printf "Timing new engine...\n";
-  let module T = Time1(PPrintEngine)(D) in
-  ()
+  match engine with
+  | Old ->
+      Printf.printf "Timing old engine...\n";
+      let module T = Time1(OldPPrintEngine)(D) in
+      ()
+  | New ->
+      Printf.printf "Timing new engine...\n";
+      let module T = Time1(PPrintEngine)(D) in
+      ()
 
 let () =
-  test3()
+  test2();
+  test3 New
 
