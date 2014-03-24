@@ -59,21 +59,21 @@ end
 
 type document =
 
-    (* [Empty] is the empty document. *)
+  (* [Empty] is the empty document. *)
 
   | Empty
 
-    (* [Char c] is a document that consists of the single character [c]. We
-       enforce the invariant that [c] is not a newline character. *)
+  (* [Char c] is a document that consists of the single character [c]. We
+     enforce the invariant that [c] is not a newline character. *)
 
   | Char of char
 
-    (* [String (s, ofs, len)] is a document that consists of the portion of
-       the string [s] delimited by the offset [ofs] and the length [len]. We
-       assume, but do not check, that this portion does not contain a newline
-       character. *)
+  (* [String s] is a document that consists of just the string [s]. We
+     assume, but do not check, that this string does not contain a newline
+     character. [String] is a special case of [FancyString], which takes up
+     less space in memory. *)
 
-  | String of string * int * int
+  | String of string
 
   (* [FancyString (s, ofs, len, apparent_length)] is a (portion of a) string
      that may contain fancy characters: color escape characters, UTF-8 or
@@ -178,7 +178,8 @@ let rec requirement = function
       0
   | Char _ ->
       1
-  | String (_, _, len)
+  | String s ->
+      String.length s
   | FancyString (_, _, _, len)
   | Blank len ->
       len
@@ -217,20 +218,17 @@ let char c =
 let space =
   char ' '
 
-let substring s ofs len =
-  if len = 0 then
-    empty
-  else
-    String (s, ofs, len)
-
 let string s =
-  substring s 0 (String.length s)
+  String s
 
 let fancysubstring s ofs len apparent_length =
   if len = 0 then
     empty
   else
     FancyString (s, ofs, len, apparent_length)
+
+let substring s ofs len =
+  fancysubstring s ofs len len
 
 let fancystring s apparent_length =
   fancysubstring s 0 (String.length s) apparent_length
@@ -413,8 +411,9 @@ module Renderer (Output : OUTPUT) = struct
         (* assert (ok state flatten); *)
         continue state cont
 
-    | String (s, ofs, len) ->
-        Output.substring state.channel s ofs len;
+    | String s ->
+        let len = String.length s in
+        Output.substring state.channel s 0 len;
         state.column <- state.column + len;
         (* assert (ok state flatten); *)
         continue state cont
@@ -506,8 +505,8 @@ module Renderer (Output : OUTPUT) = struct
 	  ()
       | Char c ->
 	  Output.char channel c
-      | String (s, ofs, len) ->
-	  Output.substring channel s ofs len
+      | String s ->
+	  Output.substring channel s 0 (String.length s)
       | FancyString (s, ofs, len, apparent_length) ->
 	  Output.substring channel s ofs len
       | Blank n ->

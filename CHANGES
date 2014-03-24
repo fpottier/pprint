@@ -1,3 +1,6 @@
+2014/03/24
+Minor changes in the implementation of [string] and [substring].
+
 2014/03/21
 Minor optimisation in the smart constructor [group].
 
