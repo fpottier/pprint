@@ -41,8 +41,14 @@ let (<==) (x : requirement) (y : int) =
 (* A uniform interface for output channels. *)
 
 class type output = object
+
+  (** [char c] sends the character [c] to the output channel. *)
   method char: char -> unit
+
+  (** [substring s ofs len] sends the substring of [s] delimited by the
+      offset [ofs] and the length [len] to the output channel. *)
   method substring: string -> int (* offset *) -> int (* length *) -> unit
+
 end
 
 (* Three kinds of output channels are wrapped so as to satisfy the above
@@ -66,60 +72,59 @@ end
 
 (* ------------------------------------------------------------------------- *)
 
-(* The rendering engine maintains the following internal state. *)
-
-(* This state is in principle internal, and its structure is subject to change
-   in future versions of the library. Nevertheless, it is exposed to the user
-   via [Custom] documents. *)
+(** The rendering engine maintains the following internal state. Its structure
+    is subject to change in future versions of the library. Nevertheless, it is
+    exposed to the user who wishes to define custom documents. *)
 
 type state = {
 
-    (* The line width and ribbon width. *)
-
     width: int;
-    ribbon: int;
+    (** The line width. This parameter is fixed throughout the execution of
+        the renderer. *)
 
-    (* The last indent. This is the number of blanks that were printed at the
-       beginning of the current line. *)
+    ribbon: int;
+    (** The ribbon width. This parameter is fixed throughout the execution of
+        the renderer. *)
 
     mutable last_indent: int;
-
-    (* The current column. *)
+    (** The number of blanks that were printed at the beginning of the current
+        line. This field is updated (only) by the function [emit_hardline]. It
+        is used (only) to determine whether the ribbon width constraint is
+        respected. *)
 
     mutable column: int;
+    (** The current column. This field must be updated whenever something is
+        sent to the output channel. It is used (only) to determine whether the
+        width constraint is respected. *)
 
   }
 
 (* ------------------------------------------------------------------------- *)
 
-(* This module type describes a custom document. *)
+(** A custom document is defined by implementing the following methods. *)
 
 class type custom = object
 
-  (* A custom document must publish the width (i.e., the number of columns)
-     that it would like to occupy if it is printed on a single line (in flat
-     mode). The special value [infinity] means that this document cannot be
-     printed on a single line; this value causes any groups that contain this
-     document to be dissolved. *)
-
+  (** A custom document must publish the width (i.e., the number of columns)
+      that it would like to occupy if it is printed on a single line (that is,
+      in flattening mode). The special value [infinity] means that this
+      document cannot be printed on a single line; this value causes any
+      groups that contain this document to be dissolved. *)
   method requirement: requirement
 
-  (* A custom document must come with two display methods. *)
-
-  (* The method [pretty] is used by the main rendering algorithm. It has
-     access to the output channel and to the algorithm's internal state, as
-     described above. In addition, it receives the current indentation level
-     and the current flattening mode (on or off). If flattening mode is on,
-     then the document must be printed on a single line, in a manner that is
-     consistent with the requirement that was published ahead of time. This
-     method is supposed to update the internal state in a manner that is
-     consistent with what is sent to the output channel. *)
-
+  (** The method [pretty] is used by the main rendering algorithm. It has
+      access to the output channel and to the algorithm's internal state, as
+      described above. In addition, it receives the current indentation level
+      and the current flattening mode (on or off). If flattening mode is on,
+      then the document must be printed on a single line, in a manner that is
+      consistent with the requirement that was published ahead of time. If
+      flattening mode is off, then there is no such obligation. The state must
+      be updated in a manner that is consistent with what is sent to the
+      output channel. *)
   method pretty: output -> state -> int -> bool -> unit
 
-  (* The method [compact] is used by the compact rendering algorithm. It has
-     access to the output channel only. *)
-
+  (** The method [compact] is used by the compact rendering algorithm. It has
+      access to the output channel only. *)
   method compact: output -> unit
 
 end
@@ -416,20 +421,6 @@ let rec blanks output n =
     blanks output (n - blank_length)
   end
 
-(* [hardline output state indent] emits a newline character, followed by the
-   prescribed amount of indentation, on the output channel. It updates the
-   current state so as to record how many indentation characters were printed
-   and to reflect the new column number. *)
-
-(* We expose this function because it can be useful to someone who defines a
-   custom document. *)
-
-let emit_hardline output state indent =
-  output#char '\n';
-  blanks output indent;
-  state.column <- indent;
-  state.last_indent <- indent
-
 (* ------------------------------------------------------------------------- *)
 
 (* This function expresses the following invariant: if we are in flattening
@@ -491,7 +482,10 @@ let rec run
          if this group's requirement is met. *)
       assert (not flatten);
       (* Emit a hardline. *)
-      emit_hardline output state indent;
+      output#char '\n';
+      blanks output indent;
+      state.column <- indent;
+      state.last_indent <- indent;
       (* Continue. *)
       continue output state cont
 
@@ -615,4 +609,11 @@ module ToFormatter =
     type channel = Format.formatter
     let output = new formatter_output
   end)
+
+(* TEMPORARY publish one emit_ function for every kind of leaf document? or on the contrary, publish [run] *)
+(* TEMPORARY
+   publish a function that tells the max remaining space on the current line
+        or a function that tells whether it is possible to satisfy [req] on the current line
+        or the function [ok]
+*)
 

@@ -119,3 +119,83 @@ module ToFormatter : PPrintRenderer.RENDERER
   with type channel = Format.formatter
    and type document = document
 
+(** {1 Defining custom documents} *)
+
+(** A width requirement is expressed as an integer, where the value [max_int]
+    is reserved and represents infinity. *)
+
+type requirement = int
+val infinity : requirement
+
+(** An output channel is represented abstractly as an object equipped with
+    methods for displaying one character and for displaying a substring. *)
+
+class type output = object
+
+  (** [char c] sends the character [c] to the output channel. *)
+  method char: char -> unit
+
+  (** [substring s ofs len] sends the substring of [s] delimited by the
+      offset [ofs] and the length [len] to the output channel. *)
+  method substring: string -> int (* offset *) -> int (* length *) -> unit
+
+end
+
+(** The rendering engine maintains the following internal state. Its structure
+    is subject to change in future versions of the library. Nevertheless, it is
+    exposed to the user who wishes to define custom documents. *)
+
+type state = {
+
+    width: int;
+    (** The line width. This parameter is fixed throughout the execution of
+        the renderer. *)
+
+    ribbon: int;
+    (** The ribbon width. This parameter is fixed throughout the execution of
+        the renderer. *)
+
+    mutable last_indent: int;
+    (** The number of blanks that were printed at the beginning of the current
+        line. This field is updated (only) by the function [emit_hardline]. It
+        is used (only) to determine whether the ribbon width constraint is
+        respected. *)
+
+    mutable column: int;
+    (** The current column. This field must be updated whenever something is
+        sent to the output channel. It is used (only) to determine whether the
+        width constraint is respected. *)
+
+  }
+
+(** A custom document is defined by implementing the following methods. *)
+
+class type custom = object
+
+  (** A custom document must publish the width (i.e., the number of columns)
+      that it would like to occupy if it is printed on a single line (that is,
+      in flattening mode). The special value [infinity] means that this
+      document cannot be printed on a single line; this value causes any
+      groups that contain this document to be dissolved. *)
+  method requirement: requirement
+
+  (** The method [pretty] is used by the main rendering algorithm. It has
+      access to the output channel and to the algorithm's internal state, as
+      described above. In addition, it receives the current indentation level
+      and the current flattening mode (on or off). If flattening mode is on,
+      then the document must be printed on a single line, in a manner that is
+      consistent with the requirement that was published ahead of time. If
+      flattening mode is off, then there is no such obligation. The state must
+      be updated in a manner that is consistent with what is sent to the
+      output channel. *)
+  method pretty: output -> state -> int -> bool -> unit
+
+  (** The method [compact] is used by the compact rendering algorithm. It has
+      access to the output channel only. *)
+  method compact: output -> unit
+
+end
+
+(** The function [custom] constructs a custom document. *)
+val custom: custom -> document
+
