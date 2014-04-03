@@ -1,3 +1,10 @@
+2014/04/03
+The library is now extensible (in principle). A [custom] document constructor
+allows the user to define her own documents, as long as they fit the manner
+in which the current rendering engine works.
+
+The [compact] rendering engine is now tail-recursive too.
+
 2014/03/21
 Minor optimisation in the smart constructor [group].
 
