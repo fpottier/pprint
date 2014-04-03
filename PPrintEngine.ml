@@ -400,9 +400,6 @@ type cont =
 
 (* Printing blank space (indentation characters). *)
 
-(* TEMPORARY expose these facilities in the .mli; also expose a method
-   that prints a hardline properly *)
-
 let blank_length =
   80
 
@@ -418,6 +415,20 @@ let rec blanks output n =
     output#substring blank_buffer 0 blank_length;
     blanks output (n - blank_length)
   end
+
+(* [hardline output state indent] emits a newline character, followed by the
+   prescribed amount of indentation, on the output channel. It updates the
+   current state so as to record how many indentation characters were printed
+   and to reflect the new column number. *)
+
+(* We expose this function because it can be useful to someone who defines a
+   custom document. *)
+
+let emit_hardline output state indent =
+  output#char '\n';
+  blanks output indent;
+  state.column <- indent;
+  state.last_indent <- indent
 
 (* ------------------------------------------------------------------------- *)
 
@@ -479,13 +490,9 @@ let rec run
          requirement, and we attempt to render a group in flattening mode only
          if this group's requirement is met. *)
       assert (not flatten);
-      (* Emit a newline character, followed by the prescribed amount of
-         indentation. Update the current state to record how many indentation
-         characters were printed and to to reflect the new column number. *)
-      output#char '\n';
-      blanks output indent;
-      state.column <- indent;
-      state.last_indent <- indent;
+      (* Emit a hardline. *)
+      emit_hardline output state indent;
+      (* Continue. *)
       continue output state cont
 
   | IfFlat (doc1, doc2) ->
