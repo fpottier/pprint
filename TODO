@@ -7,6 +7,8 @@ Réfléchir à un combinateur d'auto-découpage pour B. Canou.
 Réfléchir aussi à un combinateur Lazy. Mais serait utile seulement
 si pas utilisé dans un groupe?
 
+The compact renderer should be tail-recursive too!
+
 Try to speed up the random generator.
   choose, applied to a list, is too slow: use an array?
   avoid building n suspension when only one will be forced?
