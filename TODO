@@ -1,7 +1,3 @@
-Out of curiosity, see if one could gain time by not storing req in
-Cat nodes. Store it only in Group nodes. Should be faster, when
-documents are not shared.
-
 The compact renderer should be tail-recursive too!
 
 Try to speed up the random generator.
