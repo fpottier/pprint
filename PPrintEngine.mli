@@ -40,7 +40,7 @@ val string: string -> document
 
 (** [substring s ofs len] is a document that consists of the portion of the
     string [s] delimited by the offset [ofs] and the length [len]. This
-    portion must contain a newline. *)
+    portion must not contain a newline. *)
 val substring: string -> int -> int -> document
 
 (** [fancystring s apparent_length] is a document that consists of the string
