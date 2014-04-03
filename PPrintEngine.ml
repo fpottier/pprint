@@ -101,6 +101,17 @@ type state = {
 
 (* ------------------------------------------------------------------------- *)
 
+(* [initial rfrac width] creates a fresh initial state. *)
+
+let initial rfrac width = {
+  width = width;
+  ribbon = max 0 (min width (truncate (float_of_int width *. rfrac)));
+  last_indent = 0;
+  column = 0
+}
+
+(* ------------------------------------------------------------------------- *)
+
 (** A custom document is defined by implementing the following methods. *)
 
 class type custom = object
@@ -109,7 +120,8 @@ class type custom = object
       that it would like to occupy if it is printed on a single line (that is,
       in flattening mode). The special value [infinity] means that this
       document cannot be printed on a single line; this value causes any
-      groups that contain this document to be dissolved. *)
+      groups that contain this document to be dissolved. This method should
+      in principle work in constant time. *)
   method requirement: requirement
 
   (** The method [pretty] is used by the main rendering algorithm. It has
@@ -385,24 +397,6 @@ let custom c =
 
 (* ------------------------------------------------------------------------- *)
 
-(* The pretty rendering algorithm: preliminary declarations. *)
-
-(* The renderer is supposed to behave exactly like Daan Leijen's, although its
-   implementation is quite radically different, and simpler. Our documents are
-   constructed eagerly, as opposed to lazily. This means that we pay a large
-   space overhead, but in return, we get the ability of computing information
-   bottom-up, as described above, which allows to render documents without
-   backtracking or buffering. *)
-
-(* The renderer is written in tail-recursive style. Its explicit continuation
-   can be viewed as a sequence of pending calls to [run]. *)
-
-type cont =
-  | KNil
-  | KCons of int * bool * document * cont
-
-(* ------------------------------------------------------------------------- *)
-
 (* Printing blank space (indentation characters). *)
 
 let blank_length =
@@ -433,13 +427,28 @@ let ok state flatten : bool =
 
 (* ------------------------------------------------------------------------- *)
 
-(* The pretty rendering algorithm. *)
+(* The pretty rendering engine. *)
+
+(* The renderer is supposed to behave exactly like Daan Leijen's, although its
+   implementation is quite radically different, and simpler. Our documents are
+   constructed eagerly, as opposed to lazily. This means that we pay a large
+   space overhead, but in return, we get the ability of computing information
+   bottom-up, as described above, which allows to render documents without
+   backtracking or buffering. *)
 
 (* The [state] record is never copied; it is just threaded through. In
    addition to it, the parameters [indent] and [flatten] influence the
    manner in which the document is rendered. *)
 
-let rec run
+(* The code is written in tail-recursive style, so as to avoid running out of
+   stack space if the document is very deep. Its explicit continuation can be
+   viewed as a sequence of pending calls to [pretty]. *)
+
+type cont =
+  | KNil
+  | KCons of int * bool * document * cont
+
+let rec pretty
   (output : output)
   (state : state)
   (indent : int)
@@ -492,14 +501,14 @@ let rec run
   | IfFlat (doc1, doc2) ->
       (* Pick an appropriate sub-document, based on the current flattening
          mode. *)
-      run output state indent flatten (if flatten then doc1 else doc2) cont
+      pretty output state indent flatten (if flatten then doc1 else doc2) cont
 
   | Cat (_, doc1, doc2) ->
       (* Push the second document onto the continuation. *)
-      run output state indent flatten doc1 (KCons (indent, flatten, doc2, cont))
+      pretty output state indent flatten doc1 (KCons (indent, flatten, doc2, cont))
 
   | Nest (_, j, doc) ->
-      run output state (indent + j) flatten doc cont
+      pretty output state (indent + j) flatten doc cont
 
   | Group (req, doc) ->
       (* If we already are in flattening mode, stay in flattening mode; we
@@ -512,7 +521,7 @@ let rec run
         let column = state.column ++ req in
         column <== state.width && column <== state.last_indent + state.ribbon
       in
-      run output state indent flatten doc cont
+      pretty output state indent flatten doc cont
 
   | Align (_, doc) ->
       (* Get the current column. *)
@@ -520,7 +529,7 @@ let rec run
       (* Get the last indent. *)
       let i = state.last_indent in
       (* Act as [Nest (_, k - i, doc)]. *)
-      run output state (indent + k - i) flatten doc cont
+      pretty output state (indent + k - i) flatten doc cont
 
   | Custom c ->
       (* Invoke the document's custom rendering function. *)
@@ -534,17 +543,16 @@ and continue output state = function
   | KNil ->
       ()
   | KCons (indent, flatten, doc, cont) ->
-      run output state indent flatten doc cont
+      pretty output state indent flatten doc cont
 
-(* This is the renderer's main entry point. *)
+(* Publish a version of [pretty] that does not take an explicit continuation.
+   This function may be used by authors of custom documents. We do not expose
+   the internal [pretty] -- the one that takes a continuation -- because we
+   wish to simplify the user's life. The price to pay is that calls that go
+   through a custom document cannot be tail calls. *)
 
-let pretty output rfrac width doc =
-  run output {
-    width = width;
-    ribbon = max 0 (min width (truncate (float_of_int width *. rfrac)));
-    last_indent = 0;
-    column = 0
-  } 0 false doc KNil
+let pretty output state indent flatten doc =
+  pretty output state indent flatten doc KNil
 
 (* ------------------------------------------------------------------------- *)
 
@@ -588,7 +596,7 @@ end) = struct
   type channel = X.channel
   type dummy = document
   type document = dummy
-  let pretty rfrac width channel doc = pretty (X.output channel) rfrac width doc
+  let pretty rfrac width channel doc = pretty (X.output channel) (initial rfrac width) 0 false doc
   let compact channel doc = compact (X.output channel) doc
 end
 
@@ -609,11 +617,4 @@ module ToFormatter =
     type channel = Format.formatter
     let output = new formatter_output
   end)
-
-(* TEMPORARY publish one emit_ function for every kind of leaf document? or on the contrary, publish [run] *)
-(* TEMPORARY
-   publish a function that tells the max remaining space on the current line
-        or a function that tells whether it is possible to satisfy [req] on the current line
-        or the function [ok]
-*)
 

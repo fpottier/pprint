@@ -176,7 +176,8 @@ class type custom = object
       that it would like to occupy if it is printed on a single line (that is,
       in flattening mode). The special value [infinity] means that this
       document cannot be printed on a single line; this value causes any
-      groups that contain this document to be dissolved. *)
+      groups that contain this document to be dissolved. This method should
+      in principle work in constant time. *)
   method requirement: requirement
 
   (** The method [pretty] is used by the main rendering algorithm. It has
@@ -196,6 +197,30 @@ class type custom = object
 
 end
 
-(** The function [custom] constructs a custom document. *)
+(** The function [custom] constructs a custom document. In other words, it
+    converts an object of type [custom] to a document. *)
 val custom: custom -> document
+
+(** The key functions of the library are exposed, in the hope that they may be
+    useful to authors of custom (leaf and non-leaf) documents. In the case of
+    a leaf document, they can help perform certain basic functions; for
+    instance, applying the function [pretty] to the document [hardline] is a
+    simple way of printing a hardline, while respecting the indentation
+    parameters and updating the state in a correct manner. Similarly, applying
+    [pretty] to the document [blank n] is a simple way of printing [n] spaces.
+    In the case of a non-leaf document (i.e., one which contains
+    sub-documents), these functions are essential: they allow computing the
+    width requirement of a sub-document and displaying a sub-document. *)
+
+(** [requirement doc] computes the width requirement of the document [doc].
+    It works in constant time. *)
+val requirement: document -> requirement
+
+(** [pretty output state indent flatten doc] prints the document [doc]. See
+    the documentation of the method [pretty]. *)
+val pretty: output -> state -> int -> bool -> document -> unit
+
+(** [compact output doc] prints the document [doc]. See the documentation of
+    the method [compact]. *)
+val compact: output -> document -> unit
 
