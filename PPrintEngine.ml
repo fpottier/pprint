@@ -14,6 +14,31 @@
 (* ------------------------------------------------------------------------- *)
 (* ------------------------------------------------------------------------- *)
 
+(* A type of integers with infinity. *)
+
+type requirement =
+    int (* with infinity *)
+
+(* Infinity is encoded as [max_int]. *)
+
+let infinity : requirement =
+  max_int
+
+(* Addition of integers with infinity. *)
+
+let (++) (x : requirement) (y : requirement) : requirement =
+  if x = infinity || y = infinity then
+    infinity
+  else
+    x + y
+
+(* Comparison between an integer with infinity and a normal integer. *)
+
+let (<==) (x : requirement) (y : int) =
+  x <= y
+
+(* ------------------------------------------------------------------------- *)
+
 (* A uniform interface for output channels. *)
 
 module type OUTPUT = sig
@@ -45,6 +70,71 @@ module FormatterOutput : OUTPUT with type channel = Format.formatter = struct
   type channel = Format.formatter
   let char = Format.pp_print_char
   let substring fmt = fst (Format.pp_get_formatter_output_functions fmt ())
+end
+
+(* ------------------------------------------------------------------------- *)
+
+(* The rendering engine maintains the following internal state. *)
+
+(* This state is in principle internal, and its structure is subject to change
+   in future versions of the library. Nevertheless, it is exposed to the user
+   via [Custom] documents. *)
+
+type 'channel state = {
+
+    (* The line width and ribbon width. *)
+
+    width: int;
+    ribbon: int;
+
+    (* The output channel. *)
+
+    channel: 'channel;
+
+    (* The last indent. This is the number of blanks that were printed at the
+       beginning of the current line. *)
+
+    mutable last_indent: int;
+
+    (* The current column. *)
+
+    mutable column: int;
+
+  }
+
+(* ------------------------------------------------------------------------- *)
+
+(* This module type describes a custom document. *)
+
+(* It may seem somewhat strange to use a first-class module for this
+   purpose.  I am kind of forced into this by the fact that [OUTPUT]
+   is a signature.   Otherwise, perhaps I would have used an object;
+   that would seem more natural. *)
+
+module type CUSTOM = sig
+
+  (* A custom document must publish the width (i.e., the number of columns)
+     that it would like to occupy if it is printed on a single line (in flat
+     mode). The special value [infinity] means that this document cannot be
+     printed on a single line; this value causes any groups that contain this
+     document to be dissolved. *)
+
+  val requirement: requirement
+
+  (* A custom document must come with two display functions. The [pretty]
+     function is used by the main rendering algorithm. It has access to
+     the output channel (via the module [O]) and to the algorithm's internal
+     state, as described above. It is supposed to update the internal state
+     in a manner that is consistent with what is sent to the output channel.
+     The [compact] function is used by the compact rendering algorithm. It
+     has access to the output channel only. *)
+
+  module Make (O : OUTPUT) : sig
+    open O
+    val pretty:  channel state -> unit
+    val compact: channel       -> unit
+  end
+
 end
 
 (* ------------------------------------------------------------------------- *)
@@ -146,28 +236,9 @@ type document =
 
   | Align of requirement * document
 
-and requirement =
-    int (* with infinity *)
+  (* [Custom (req, f)] is a document whose appearance is user-defined. *)
 
-(* ------------------------------------------------------------------------- *)
-
-(* Infinity is encoded as [max_int]. *)
-
-let infinity : requirement =
-  max_int
-
-(* Addition of integers with infinity. *)
-
-let (++) (x : requirement) (y : requirement) : requirement =
-  if x = infinity || y = infinity then
-    infinity
-  else
-    x + y
-
-(* Comparison between an integer with infinity and a normal integer. *)
-
-let (<==) (x : requirement) (y : int) =
-  x <= y
+  | Custom of (module CUSTOM)
 
 (* ------------------------------------------------------------------------- *)
 
@@ -200,6 +271,9 @@ let rec requirement = function
          node is constructed -- so as to allow us to answer in constant time
          here. *)
       req
+  | Custom c ->
+      let module C = (val c) in
+      C.requirement
 
 (* ------------------------------------------------------------------------- *)
 
@@ -314,6 +388,12 @@ let group x =
 let align x =
   Align (requirement x, x)
 
+let custom c =
+  (* Sanity check. *)
+  let module C = (val c : CUSTOM) in
+  assert (C.requirement >= 0);
+  Custom c
+
 (* ------------------------------------------------------------------------- *)
 
 (* The pretty rendering algorithm: preliminary declarations. *)
@@ -324,31 +404,6 @@ let align x =
    space overhead, but in return, we get the ability of computing information
    bottom-up, as described above, which allows to render documents without
    backtracking or buffering. *)
-
-(* The renderer maintains the following state. This state is partly mutable.
-   It is never duplicated; it is just threaded through. *)
-
-type 'channel state = {
-
-    (* The line width and ribbon width. *)
-
-    width: int;
-    ribbon: int;
-
-    (* The output channel. *)
-
-    channel: 'channel;
-
-    (* The last indent. This is the number of blanks that were printed at the
-       beginning of the current line. *)
-
-    mutable last_indent: int;
-
-    (* The current column. *)
-
-    mutable column: int;
-
-  }
 
 (* The renderer is written in tail-recursive style. Its explicit continuation
    can be viewed as a sequence of pending calls to [run]. *)
@@ -400,6 +455,8 @@ module Renderer (Output : OUTPUT) = struct
     state.column <= state.width && state.column <= state.last_indent + state.ribbon
 
   (* The renderer. *)
+
+  (* The [state] record is never copied; it is just threaded through. *)
 
   let rec run (state : channel state) (indent : int) (flatten : bool) (doc : document) (cont : cont) : unit =
     match doc with
@@ -478,6 +535,14 @@ module Renderer (Output : OUTPUT) = struct
         (* Act as [Nest (_, k - i, doc)]. *)
         run state (indent + k - i) flatten doc cont
 
+    | Custom c ->
+        (* Invoke the document's custom rendering function. *)
+        let module C = (val c) in
+        let module R = C.Make(Output) in
+        R.pretty state;
+        (* Continue. *)
+        continue state cont
+
   and continue state = function
     | KNil ->
         ()
@@ -522,6 +587,11 @@ module Renderer (Output : OUTPUT) = struct
       | Group (_, doc)
       | Align (_, doc) ->
 	  scan doc
+      | Custom c ->
+          (* Invoke the document's custom rendering function. *)
+          let module C = (val c) in
+          let module R = C.Make(Output) in
+          R.compact channel
     in
 
     scan doc
