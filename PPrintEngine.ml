@@ -558,30 +558,46 @@ let pretty output state indent flatten doc =
 
 (* The compact rendering algorithm. *)
 
-let rec compact output = function
+let rec compact output doc cont =
+  match doc with
   | Empty ->
-      ()
+      continue output cont
   | Char c ->
-      output#char c
+      output#char c;
+      continue output cont
   | String (s, ofs, len) ->
-      output#substring s ofs len
+      output#substring s ofs len;
+      continue output cont
   | FancyString (s, ofs, len, apparent_length) ->
-      output#substring s ofs len
+      output#substring s ofs len;
+      continue output cont
   | Blank n ->
-      blanks output n
+      blanks output n;
+      continue output cont
   | HardLine ->
-      output#char '\n'
+      output#char '\n';
+      continue output cont
   | Cat (_, doc1, doc2) ->
-      compact output doc1;
-      compact output doc2
+      compact output doc1 (doc2 :: cont)
   | IfFlat (doc, _)
   | Nest (_, _, doc)
   | Group (_, doc)
   | Align (_, doc) ->
-      compact output doc
+      compact output doc cont
   | Custom c ->
       (* Invoke the document's custom rendering function. *)
-      c#compact output
+      c#compact output;
+      continue output cont
+
+and continue output cont =
+  match cont with
+  | [] ->
+      ()
+  | doc :: cont ->
+      compact output doc cont
+
+let compact output doc =
+  compact output doc []
 
 (* ------------------------------------------------------------------------- *)
 
