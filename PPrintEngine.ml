@@ -524,12 +524,13 @@ let rec pretty
       pretty output state indent flatten doc cont
 
   | Align (_, doc) ->
-      (* Get the current column. *)
-      let k = state.column in
-      (* Get the last indent. *)
-      let i = state.last_indent in
-      (* Act as [Nest (_, k - i, doc)]. *)
-      pretty output state (indent + k - i) flatten doc cont
+      (* The effect of this combinator is to set [indent] to [state.column].
+         Usually [indent] is equal to [state.last_indent], hence setting it
+         to [state.column] increases it. However, if [nest] has been used
+         since the current line began, then this could cause [indent] to
+         decrease. *)
+      (* assert (state.column > state.last_indent); *)
+      pretty output state state.column flatten doc cont
 
   | Custom c ->
       (* Invoke the document's custom rendering function. *)

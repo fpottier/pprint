@@ -1,3 +1,5 @@
+Publish the function blanks.
+
 Try to speed up the random generator.
   choose, applied to a list, is too slow: use an array?
   avoid building n suspension when only one will be forced?
