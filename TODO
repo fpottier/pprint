@@ -1,6 +1,4 @@
-Réfléchir à une feuille primitive custom pour B. Canou.
-
-The compact renderer should be tail-recursive too!
+Publish the function blanks.
 
 Try to speed up the random generator.
   choose, applied to a list, is too slow: use an array?

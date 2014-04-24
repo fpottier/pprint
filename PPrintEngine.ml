@@ -12,42 +12,135 @@
 (**************************************************************************)
 
 (* ------------------------------------------------------------------------- *)
+
+(* A type of integers with infinity. *)
+
+type requirement =
+    int (* with infinity *)
+
+(* Infinity is encoded as [max_int]. *)
+
+let infinity : requirement =
+  max_int
+
+(* Addition of integers with infinity. *)
+
+let (++) (x : requirement) (y : requirement) : requirement =
+  if x = infinity || y = infinity then
+    infinity
+  else
+    x + y
+
+(* Comparison between an integer with infinity and a normal integer. *)
+
+let (<==) (x : requirement) (y : int) =
+  x <= y
+
 (* ------------------------------------------------------------------------- *)
 
 (* A uniform interface for output channels. *)
 
-module type OUTPUT = sig
-  type channel
-  val char: channel -> char -> unit
-  val substring: channel -> string -> int (* offset *) -> int (* length *) -> unit
+class type output = object
+
+  (** [char c] sends the character [c] to the output channel. *)
+  method char: char -> unit
+
+  (** [substring s ofs len] sends the substring of [s] delimited by the
+      offset [ofs] and the length [len] to the output channel. *)
+  method substring: string -> int (* offset *) -> int (* length *) -> unit
+
+end
+
+(* Three kinds of output channels are wrapped so as to satisfy the above
+   interface: OCaml output channels, OCaml memory buffers, and OCaml
+   formatters. *)
+
+class channel_output channel = object
+  method char = output_char channel
+  method substring = output channel
+end
+
+class buffer_output buffer = object
+  method char = Buffer.add_char buffer
+  method substring = Buffer.add_substring buffer
+end
+
+class formatter_output fmt = object
+  method char = Format.pp_print_char fmt
+  method substring = fst (Format.pp_get_formatter_output_functions fmt ())
 end
 
 (* ------------------------------------------------------------------------- *)
 
-(* Three implementations of the above interface, respectively based on output
-   channels, memory buffers, and formatters. This compensates for the fact
-   that ocaml's standard library does not allow creating an output channel
-   that feeds into a memory buffer (a regrettable omission). *)
+(** The rendering engine maintains the following internal state. Its structure
+    is subject to change in future versions of the library. Nevertheless, it is
+    exposed to the user who wishes to define custom documents. *)
 
-module ChannelOutput : OUTPUT with type channel = out_channel = struct
-  type channel = out_channel
-  let char = output_char
-  let substring = output
-end
+type state = {
 
-module BufferOutput : OUTPUT with type channel = Buffer.t = struct
-  type channel = Buffer.t
-  let char = Buffer.add_char
-  let substring = Buffer.add_substring
-end
+    width: int;
+    (** The line width. This parameter is fixed throughout the execution of
+        the renderer. *)
 
-module FormatterOutput : OUTPUT with type channel = Format.formatter = struct
-  type channel = Format.formatter
-  let char = Format.pp_print_char
-  let substring fmt = fst (Format.pp_get_formatter_output_functions fmt ())
-end
+    ribbon: int;
+    (** The ribbon width. This parameter is fixed throughout the execution of
+        the renderer. *)
+
+    mutable last_indent: int;
+    (** The number of blanks that were printed at the beginning of the current
+        line. This field is updated (only) by the function [emit_hardline]. It
+        is used (only) to determine whether the ribbon width constraint is
+        respected. *)
+
+    mutable column: int;
+    (** The current column. This field must be updated whenever something is
+        sent to the output channel. It is used (only) to determine whether the
+        width constraint is respected. *)
+
+  }
 
 (* ------------------------------------------------------------------------- *)
+
+(* [initial rfrac width] creates a fresh initial state. *)
+
+let initial rfrac width = {
+  width = width;
+  ribbon = max 0 (min width (truncate (float_of_int width *. rfrac)));
+  last_indent = 0;
+  column = 0
+}
+
+(* ------------------------------------------------------------------------- *)
+
+(** A custom document is defined by implementing the following methods. *)
+
+class type custom = object
+
+  (** A custom document must publish the width (i.e., the number of columns)
+      that it would like to occupy if it is printed on a single line (that is,
+      in flattening mode). The special value [infinity] means that this
+      document cannot be printed on a single line; this value causes any
+      groups that contain this document to be dissolved. This method should
+      in principle work in constant time. *)
+  method requirement: requirement
+
+  (** The method [pretty] is used by the main rendering algorithm. It has
+      access to the output channel and to the algorithm's internal state, as
+      described above. In addition, it receives the current indentation level
+      and the current flattening mode (on or off). If flattening mode is on,
+      then the document must be printed on a single line, in a manner that is
+      consistent with the requirement that was published ahead of time. If
+      flattening mode is off, then there is no such obligation. The state must
+      be updated in a manner that is consistent with what is sent to the
+      output channel. *)
+  method pretty: output -> state -> int -> bool -> unit
+
+  (** The method [compact] is used by the compact rendering algorithm. It has
+      access to the output channel only. *)
+  method compact: output -> unit
+
+end
+
 (* ------------------------------------------------------------------------- *)
 
 (* Here is the algebraic data type of documents. It is analogous to Daan
@@ -146,28 +239,9 @@ type document =
 
   | Align of requirement * document
 
-and requirement =
-    int (* with infinity *)
+  (* [Custom (req, f)] is a document whose appearance is user-defined. *)
 
-(* ------------------------------------------------------------------------- *)
-
-(* Infinity is encoded as [max_int]. *)
-
-let infinity : requirement =
-  max_int
-
-(* Addition of integers with infinity. *)
-
-let (++) (x : requirement) (y : requirement) : requirement =
-  if x = infinity || y = infinity then
-    infinity
-  else
-    x + y
-
-(* Comparison between an integer with infinity and a normal integer. *)
-
-let (<==) (x : requirement) (y : int) =
-  x <= y
+  | Custom of custom
 
 (* ------------------------------------------------------------------------- *)
 
@@ -201,6 +275,8 @@ let rec requirement = function
          node is constructed -- so as to allow us to answer in constant time
          here. *)
       req
+  | Custom c ->
+      c#requirement
 
 (* ------------------------------------------------------------------------- *)
 
@@ -312,9 +388,44 @@ let group x =
 let align x =
   Align (requirement x, x)
 
+let custom c =
+  (* Sanity check. *)
+  assert (c#requirement >= 0);
+  Custom c
+
 (* ------------------------------------------------------------------------- *)
 
-(* The pretty rendering algorithm: preliminary declarations. *)
+(* Printing blank space (indentation characters). *)
+
+let blank_length =
+  80
+
+let blank_buffer =
+  String.make blank_length ' '
+
+let rec blanks output n =
+  if n <= 0 then
+    ()
+  else if n <= blank_length then
+    output#substring blank_buffer 0 n
+  else begin
+    output#substring blank_buffer 0 blank_length;
+    blanks output (n - blank_length)
+  end
+
+(* ------------------------------------------------------------------------- *)
+
+(* This function expresses the following invariant: if we are in flattening
+   mode, then we must be within bounds, i.e. the width and ribbon width
+   constraints must be respected. *)
+
+let ok state flatten : bool =
+  not flatten ||
+  state.column <= state.width && state.column <= state.last_indent + state.ribbon
+
+(* ------------------------------------------------------------------------- *)
+
+(* The pretty rendering engine. *)
 
 (* The renderer is supposed to behave exactly like Daan Leijen's, although its
    implementation is quite radically different, and simpler. Our documents are
@@ -323,220 +434,204 @@ let align x =
    bottom-up, as described above, which allows to render documents without
    backtracking or buffering. *)
 
-(* The renderer maintains the following state. This state is partly mutable.
-   It is never duplicated; it is just threaded through. *)
+(* The [state] record is never copied; it is just threaded through. In
+   addition to it, the parameters [indent] and [flatten] influence the
+   manner in which the document is rendered. *)
 
-type 'channel state = {
-
-    (* The line width and ribbon width. *)
-
-    width: int;
-    ribbon: int;
-
-    (* The output channel. *)
-
-    channel: 'channel;
-
-    (* The last indent. This is the number of blanks that were printed at the
-       beginning of the current line. *)
-
-    mutable last_indent: int;
-
-    (* The current column. *)
-
-    mutable column: int;
-
-  }
-
-(* The renderer is written in tail-recursive style. Its explicit continuation
-   can be viewed as a sequence of pending calls to [run]. *)
+(* The code is written in tail-recursive style, so as to avoid running out of
+   stack space if the document is very deep. Its explicit continuation can be
+   viewed as a sequence of pending calls to [pretty]. *)
 
 type cont =
   | KNil
   | KCons of int * bool * document * cont
 
-(* ------------------------------------------------------------------------- *)
+let rec pretty
+  (output : output)
+  (state : state)
+  (indent : int)
+  (flatten : bool)
+  (doc : document)
+  (cont : cont)
+: unit =
+  match doc with
 
-(* The pretty rendering algorithm. *)
+  | Empty ->
+      continue output state cont
 
-(* The renderer is parameterized over an implementation of output channels. *)
+  | Char c ->
+      output#char c;
+      state.column <- state.column + 1;
+      (* assert (ok state flatten); *)
+      continue output state cont
 
-module Renderer (Output : OUTPUT) = struct
+  | String s ->
+      let len = String.length s in
+      output#substring s 0 len;
+      state.column <- state.column + len;
+      (* assert (ok state flatten); *)
+      continue output state cont
 
-  type channel =
-      Output.channel
+  | FancyString (s, ofs, len, apparent_length) ->
+      output#substring s ofs len;
+      state.column <- state.column + apparent_length;
+      (* assert (ok state flatten); *)
+      continue output state cont
 
-  type dummy =
-      document
-  type document =
-      dummy
+  | Blank n ->
+      blanks output n;
+      state.column <- state.column + n;
+      (* assert (ok state flatten); *)
+      continue output state cont
 
-  (* Printing blank space (indentation characters). *)
+  | HardLine ->
+      (* We cannot be in flattening mode, because a hard line has an [infinity]
+         requirement, and we attempt to render a group in flattening mode only
+         if this group's requirement is met. *)
+      assert (not flatten);
+      (* Emit a hardline. *)
+      output#char '\n';
+      blanks output indent;
+      state.column <- indent;
+      state.last_indent <- indent;
+      (* Continue. *)
+      continue output state cont
 
-  let blank_length =
-    80
+  | IfFlat (doc1, doc2) ->
+      (* Pick an appropriate sub-document, based on the current flattening
+         mode. *)
+      pretty output state indent flatten (if flatten then doc1 else doc2) cont
 
-  let blank_buffer =
-    String.make blank_length ' '
+  | Cat (_, doc1, doc2) ->
+      (* Push the second document onto the continuation. *)
+      pretty output state indent flatten doc1 (KCons (indent, flatten, doc2, cont))
 
-  let rec blanks channel n =
-    if n <= 0 then
+  | Nest (_, j, doc) ->
+      pretty output state (indent + j) flatten doc cont
+
+  | Group (req, doc) ->
+      (* If we already are in flattening mode, stay in flattening mode; we
+         are committed to it. If we are not already in flattening mode, we
+         have a choice of entering flattening mode. We enter this mode only
+         if we know that this group fits on this line without violating the
+         width or ribbon width constraints. Thus, we never backtrack. *)
+      let flatten =
+        flatten ||
+        let column = state.column ++ req in
+        column <== state.width && column <== state.last_indent + state.ribbon
+      in
+      pretty output state indent flatten doc cont
+
+  | Align (_, doc) ->
+      (* The effect of this combinator is to set [indent] to [state.column].
+         Usually [indent] is equal to [state.last_indent], hence setting it
+         to [state.column] increases it. However, if [nest] has been used
+         since the current line began, then this could cause [indent] to
+         decrease. *)
+      (* assert (state.column > state.last_indent); *)
+      pretty output state state.column flatten doc cont
+
+  | Custom c ->
+      (* Invoke the document's custom rendering function. *)
+      c#pretty output state indent flatten;
+      (* Sanity check. *)
+      assert (ok state flatten);
+      (* Continue. *)
+      continue output state cont
+
+and continue output state = function
+  | KNil ->
       ()
-    else if n <= blank_length then
-      Output.substring channel blank_buffer 0 n
-    else begin
-      Output.substring channel blank_buffer 0 blank_length;
-      blanks channel (n - blank_length)
-    end
+  | KCons (indent, flatten, doc, cont) ->
+      pretty output state indent flatten doc cont
 
-  (* This function expresses the following invariant: if we are in flattening
-     mode, then we must be within bounds, i.e. the width and ribbon width
-     constraints must be respected. *)
+(* Publish a version of [pretty] that does not take an explicit continuation.
+   This function may be used by authors of custom documents. We do not expose
+   the internal [pretty] -- the one that takes a continuation -- because we
+   wish to simplify the user's life. The price to pay is that calls that go
+   through a custom document cannot be tail calls. *)
 
-  let ok state flatten : bool =
-    not flatten ||
-    state.column <= state.width && state.column <= state.last_indent + state.ribbon
-
-  (* The renderer. *)
-
-  let rec run (state : channel state) (indent : int) (flatten : bool) (doc : document) (cont : cont) : unit =
-    match doc with
-
-    | Empty ->
-	continue state cont
-
-    | Char c ->
-        Output.char state.channel c;
-        state.column <- state.column + 1;
-        (* assert (ok state flatten); *)
-        continue state cont
-
-    | String s ->
-        let len = String.length s in
-        Output.substring state.channel s 0 len;
-        state.column <- state.column + len;
-        (* assert (ok state flatten); *)
-        continue state cont
-
-    | FancyString (s, ofs, len, apparent_length) ->
-        Output.substring state.channel s ofs len;
-        state.column <- state.column + apparent_length;
-        (* assert (ok state flatten); *)
-        continue state cont
-
-    | Blank n ->
-        blanks state.channel n;
-        state.column <- state.column + n;
-        (* assert (ok state flatten); *)
-        continue state cont
-
-    | HardLine ->
-        (* We cannot be in flattening mode, because a hard line has an [infinity]
-           requirement, and we attempt to render a group in flattening mode only
-           if this group's requirement is met. *)
-        assert (not flatten);
-        (* Emit a newline character, followed by the prescribed amount of
-           indentation. Update the current state to record how many indentation
-           characters were printed and to to reflect the new column number. *)
-	Output.char state.channel '\n';
-	blanks state.channel indent;
-	state.column <- indent;
-	state.last_indent <- indent;
-        continue state cont
-
-    | IfFlat (doc1, doc2) ->
-        (* Pick an appropriate sub-document, based on the current flattening
-           mode. *)
-        run state indent flatten (if flatten then doc1 else doc2) cont
-
-    | Cat (_, doc1, doc2) ->
-        (* Push the second document onto the continuation. *)
-        run state indent flatten doc1 (KCons (indent, flatten, doc2, cont))
-
-    | Nest (_, j, doc) ->
-	run state (indent + j) flatten doc cont
-
-    | Group (req, doc) ->
-        (* If we already are in flattening mode, stay in flattening mode; we
-           are committed to it. If we are not already in flattening mode, we
-           have a choice of entering flattening mode. We enter this mode only
-           if we know that this group fits on this line without violating the
-           width or ribbon width constraints. Thus, we never backtrack. *)
-        let flatten =
-          flatten ||
-          let column = state.column ++ req in
-          column <== state.width && column <== state.last_indent + state.ribbon
-        in
-        run state indent flatten doc cont
-
-    | Align (_, doc) ->
-        (* Get the current column. *)
-        let k = state.column in
-        (* Get the last indent. *)
-        let i = state.last_indent in
-        (* Act as [Nest (_, k - i, doc)]. *)
-        run state (indent + k - i) flatten doc cont
-
-  and continue state = function
-    | KNil ->
-        ()
-    | KCons (indent, flatten, doc, cont) ->
-        run state indent flatten doc cont
-
-  (* This is the renderer's main entry point. *)
-
-  let pretty rfrac width channel doc =
-    run {
-      width = width;
-      ribbon = max 0 (min width (truncate (float_of_int width *. rfrac)));
-      channel = channel;
-      last_indent = 0;
-      column = 0
-    } 0 false doc KNil
+let pretty output state indent flatten doc =
+  pretty output state indent flatten doc KNil
 
 (* ------------------------------------------------------------------------- *)
 
 (* The compact rendering algorithm. *)
 
-  let compact channel doc =
+let rec compact output doc cont =
+  match doc with
+  | Empty ->
+      continue output cont
+  | Char c ->
+      output#char c;
+      continue output cont
+  | String s ->
+      let len = String.length s in
+      output#substring s 0 len;
+      continue output cont
+  | FancyString (s, ofs, len, apparent_length) ->
+      output#substring s ofs len;
+      continue output cont
+  | Blank n ->
+      blanks output n;
+      continue output cont
+  | HardLine ->
+      output#char '\n';
+      continue output cont
+  | Cat (_, doc1, doc2) ->
+      compact output doc1 (doc2 :: cont)
+  | IfFlat (doc, _)
+  | Nest (_, _, doc)
+  | Group (_, doc)
+  | Align (_, doc) ->
+      compact output doc cont
+  | Custom c ->
+      (* Invoke the document's custom rendering function. *)
+      c#compact output;
+      continue output cont
 
-    let rec scan = function
-      | Empty ->
-	  ()
-      | Char c ->
-	  Output.char channel c
-      | String s ->
-	  Output.substring channel s 0 (String.length s)
-      | FancyString (s, ofs, len, apparent_length) ->
-	  Output.substring channel s ofs len
-      | Blank n ->
-	  blanks channel n
-      | HardLine ->
-	  Output.char channel '\n'
-      | Cat (_, doc1, doc2) ->
-	  scan doc1;
-	  scan doc2
-      | IfFlat (doc, _)
-      | Nest (_, _, doc)
-      | Group (_, doc)
-      | Align (_, doc) ->
-	  scan doc
-    in
+and continue output cont =
+  match cont with
+  | [] ->
+      ()
+  | doc :: cont ->
+      compact output doc cont
 
-    scan doc
-
-end
+let compact output doc =
+  compact output doc []
 
 (* ------------------------------------------------------------------------- *)
 
-(* Instantiating the renderers for the three kinds of output channels. *)
+(* We now instantiate the renderers for the three kinds of output channels. *)
+
+(* This is just boilerplate. *)
+
+module MakeRenderer (X : sig
+  type channel
+  val output: channel -> output
+end) = struct
+  type channel = X.channel
+  type dummy = document
+  type document = dummy
+  let pretty rfrac width channel doc = pretty (X.output channel) (initial rfrac width) 0 false doc
+  let compact channel doc = compact (X.output channel) doc
+end
 
 module ToChannel =
-  Renderer(ChannelOutput)
+  MakeRenderer(struct
+    type channel = out_channel
+    let output = new channel_output
+  end)
 
 module ToBuffer =
-  Renderer(BufferOutput)
+  MakeRenderer(struct
+    type channel = Buffer.t
+    let output = new buffer_output
+  end)
 
 module ToFormatter =
-  Renderer(FormatterOutput)
+  MakeRenderer(struct
+    type channel = Format.formatter
+    let output = new formatter_output
+  end)
 
