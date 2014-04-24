@@ -21,6 +21,7 @@ headers:
 DATE     := $(shell /bin/date +%Y%m%d)
 BASE     := pprint
 ARCHIVE  := $(BASE)-$(DATE)
+MD5      := $(shell if [ `which md5` ] ; then echo md5 ; else echo md5sum ; fi)
 
 archive: headers all doc
 	rm -rf $(ARCHIVE) $(ARCHIVE).tar.gz
@@ -28,7 +29,7 @@ archive: headers all doc
 	mkdir $(ARCHIVE)/src && cp *.ml *.mli *.mllib Makefile META $(ARCHIVE)/src
 	echo version = \"$(DATE)\" >> $(ARCHIVE)/src/META
 	tar -c -v -z -f $(ARCHIVE).tar.gz -X .exclude $(ARCHIVE)
-	md5sum $(ARCHIVE).tar.gz
+	$(MD5) $(ARCHIVE).tar.gz
 
 # --------------------------------------------------------------------------------
 
