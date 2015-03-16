@@ -133,7 +133,7 @@ val words: string -> document list
     character that satisfies the predicate [ok]. The substrings thus obtained
     are turned into documents, and a list of documents is returned. No
     information is lost: the concatenation of the documents yields the
-    original string.  This code is not UTF-8 aware. *)
+    original string. This code is not UTF-8 aware. *)
 val split: (char -> bool) -> string -> document list
 
 (** [flow sep docs] separates the documents in the list [docs] with the
