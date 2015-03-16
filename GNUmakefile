@@ -10,7 +10,7 @@ HEADACHE := headache
 HEADER   := header
 
 headers:
-	for f in *.ml *.mli ; do \
+	for f in PPrint*.ml PPrint*.mli ; do \
 	  $(HEADACHE) -h $(HEADER) $$f ; \
 	done
 

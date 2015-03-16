@@ -6,8 +6,8 @@
 (*  Nicolas Pouillard, IT University of Copenhagen                        *)
 (*                                                                        *)
 (*  Copyright 2007-2014 INRIA. All rights reserved. This file is          *)
-(*  distributed under the terms of the CeCILL-C license, as described     *)
-(*  in the file LICENSE.                                                  *)
+(*  distributed under the terms of the GNU Library General Public         *)
+(*  License, with an exception, as described in the file LICENSE.         *)
 (*                                                                        *)
 (**************************************************************************)
 
