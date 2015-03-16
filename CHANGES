@@ -1,3 +1,6 @@
+2015/03/16
+Moved to github and changed the license to LGPL with an exception.
+
 2014/04/25
 Minor changes in the implementation of [string] and [substring].
 Initially committed on 2014/03/24, but left out of the 20140424
