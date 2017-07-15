@@ -1,6 +1,6 @@
 .PHONY: all install clean doc test
 
-OCAMLBUILD := ocamlbuild -use-ocamlfind -cflags "-g" -lflags "-g" -classic-display
+OCAMLBUILD := ocamlbuild -use-ocamlfind -classic-display
 OCAMLFIND  := ocamlfind
 DOCDIR     := doc
 MAIN       := PPrintTest
@@ -32,4 +32,3 @@ doc: all
 test: all
 	$(OCAMLBUILD) $(MAIN).native
 	./$(MAIN).native
-
