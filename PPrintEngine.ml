@@ -269,7 +269,7 @@ let rec requirement = function
       infinity
   | Cat (req, _, _)
   | Nest (req, _, _)
-  | Group (req, _) 
+  | Group (req, _)
   | Align (req, _) ->
       (* These nodes store their requirement -- which is computed when the
          node is constructed -- so as to allow us to answer in constant time
@@ -634,4 +634,3 @@ module ToFormatter =
     type channel = Format.formatter
     let output = new formatter_output
   end)
-
