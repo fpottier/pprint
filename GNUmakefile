@@ -1,8 +1,15 @@
+# -------------------------------------------------------------------------
+
+# This Makefile is not distributed.
+
+SHELL := bash
+export CDPATH=
+
 # --------------------------------------------------------------------------------
 
-.PHONY: all install clean doc test archive export headers
+.PHONY: all install uninstall reinstall clean doc test package export headers
 
-all install clean doc test:
+all install uninstall reinstall clean doc test:
 	$(MAKE) -C src $@
 
 # --------------------------------------------------------------------------------
@@ -19,29 +26,29 @@ headers:
 
 # --------------------------------------------------------------------------------
 
-# [make archive] builds an archive of everything.
+# [make package] builds a package of everything.
 
 DATE     := $(shell /bin/date +%Y%m%d)
 BASE     := pprint
-ARCHIVE  := $(BASE)-$(DATE)
+PACKAGE  := $(BASE)-$(DATE)
 MD5      := $(shell if [ `which md5` ] ; then echo md5 ; else echo md5sum ; fi)
 
-archive: headers all doc
-	rm -rf $(ARCHIVE) $(ARCHIVE).tar.gz
-	mkdir $(ARCHIVE) && cp README AUTHORS LICENSE CHANGES $(ARCHIVE)
-	mkdir $(ARCHIVE)/src && cp src/*.ml src/*.mli src/*.mllib src/Makefile src/META $(ARCHIVE)/src
-	echo version = \"$(DATE)\" >> $(ARCHIVE)/src/META
-	tar -c -v -z -f $(ARCHIVE).tar.gz -X .exclude $(ARCHIVE)
-	$(MD5) $(ARCHIVE).tar.gz
+package: headers all doc
+	rm -rf $(PACKAGE) $(PACKAGE).tar.gz
+	mkdir $(PACKAGE) && cp README AUTHORS LICENSE CHANGES $(PACKAGE)
+	mkdir $(PACKAGE)/src && cp src/*.ml src/*.mli src/*.mllib src/Makefile src/META $(PACKAGE)/src
+	echo version = \"$(DATE)\" >> $(PACKAGE)/src/META
+	tar -c -v -z -f $(PACKAGE).tar.gz -X .exclude $(PACKAGE)
+	$(MD5) $(PACKAGE).tar.gz
 
 # --------------------------------------------------------------------------------
 
-# [make export] copies the archive to the Web site.
+# [make export] copies the package to the Web site.
 
 SERVER := yquem.inria.fr
 WEBDIR := public_html/$(BASE)
 
-export: archive
-	scp $(ARCHIVE).tar.gz $(SERVER):$(WEBDIR)
-	ssh $(SERVER) "bash -c 'cd $(WEBDIR) && /bin/ln -sf $(ARCHIVE).tar.gz $(BASE).tar.gz && rm -rf doc'"
+export: package
+	scp $(PACKAGE).tar.gz $(SERVER):$(WEBDIR)
+	ssh $(SERVER) "bash -c 'cd $(WEBDIR) && /bin/ln -sf $(PACKAGE).tar.gz $(BASE).tar.gz && rm -rf doc'"
 	scp -r doc $(SERVER):$(WEBDIR)
