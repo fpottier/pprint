@@ -34,7 +34,7 @@ TARBALL  := $(shell pwd)/$(PACKAGE).tar.gz
 
 package: all doc
 	rm -rf $(PACKAGE) $(TARBALL)
-	mkdir $(PACKAGE) && cp README.md AUTHORS LICENSE CHANGES Makefile $(PACKAGE)
+	mkdir $(PACKAGE) && cp README.md AUTHORS LICENSE CHANGES.md Makefile $(PACKAGE)
 	mkdir $(PACKAGE)/src
 	cp -r src/*.ml src/*.mli src/*.mllib src/Makefile src/META src/doc $(PACKAGE)/src
 	echo version = \"$(DATE)\" >> $(PACKAGE)/src/META
