@@ -6,8 +6,7 @@ references:
    http://www.cs.uu.nl/~daan/pprint.html
    http://homepages.inf.ed.ac.uk/wadler/papers/prettier/prettier.pdf
 
-To install PPrint, type "make -C src install". ocamlfind is required.
+To install PPrint, type `make install`. `ocamlfind` is required.
 
-The documentation for PPrint is built by "make doc" and is found in the
-file doc/index.html.
-
+The documentation for PPrint is built by `make doc` and is then found in the
+file `src/doc/index.html`.
