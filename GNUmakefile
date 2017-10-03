@@ -1,6 +1,9 @@
-include Makefile
+# --------------------------------------------------------------------------------
 
-.PHONY: archive export headers billet bench
+.PHONY: all install clean doc test archive export headers
+
+all install clean doc test:
+	$(MAKE) -C src $@
 
 # --------------------------------------------------------------------------------
 
@@ -26,7 +29,7 @@ MD5      := $(shell if [ `which md5` ] ; then echo md5 ; else echo md5sum ; fi)
 archive: headers all doc
 	rm -rf $(ARCHIVE) $(ARCHIVE).tar.gz
 	mkdir $(ARCHIVE) && cp README AUTHORS LICENSE CHANGES $(ARCHIVE)
-	mkdir $(ARCHIVE)/src && cp *.ml *.mli *.mllib Makefile META $(ARCHIVE)/src
+	mkdir $(ARCHIVE)/src && cp src/*.ml src/*.mli src/*.mllib src/Makefile src/META $(ARCHIVE)/src
 	echo version = \"$(DATE)\" >> $(ARCHIVE)/src/META
 	tar -c -v -z -f $(ARCHIVE).tar.gz -X .exclude $(ARCHIVE)
 	$(MD5) $(ARCHIVE).tar.gz
@@ -42,23 +45,3 @@ export: archive
 	scp $(ARCHIVE).tar.gz $(SERVER):$(WEBDIR)
 	ssh $(SERVER) "bash -c 'cd $(WEBDIR) && /bin/ln -sf $(ARCHIVE).tar.gz $(BASE).tar.gz && rm -rf doc'"
 	scp -r doc $(SERVER):$(WEBDIR)
-
-# --------------------------------------------------------------------------------
-
-# [make billet] creates the blog entry.
-
-billet: billet.html
-
-%.html: %.markdown
-	pandoc -s $< -c style.css > $@
-
-# --------------------------------------------------------------------------------
-
-# [make bench] runs a performance benchmark.
-
-OCAMLBUILD := ocamlbuild -use-ocamlfind -cflags "-g" -lflags "-g" -classic-display
-
-bench: all
-	$(OCAMLBUILD) -tag use_unix PPrintBench.native
-	time ./PPrintBench.native
-

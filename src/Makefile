@@ -1,4 +1,4 @@
-.PHONY: all install clean doc test
+.PHONY: all install clean doc test bench
 
 OCAMLBUILD := ocamlbuild -use-ocamlfind -classic-display
 OCAMLFIND  := ocamlfind
@@ -32,3 +32,7 @@ doc: all
 test: all
 	$(OCAMLBUILD) $(MAIN).native
 	./$(MAIN).native
+
+bench: all
+	$(OCAMLBUILD) -tag use_unix PPrintBench.native
+	time ./PPrintBench.native
