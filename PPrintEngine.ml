@@ -60,8 +60,10 @@ class channel_output channel = object
   method substring = output_substring channel
     (* We used to use [output], but, as of OCaml 4.02 and with -safe-string
        enabled, the type of [output] has changed: this function now expects
-       an argument of type [bytes]. The new function [output_string] should
-       be used instead. This change means that OCaml 4.02 is required. *)
+       an argument of type [bytes]. The new function [output_substring] must
+       be used instead. Furthermore, as of OCaml 4.06, -safe-string is enabled
+       by default. In summary, we require OCaml 4.02, use [output_substring],
+       and enable -safe-string. *)
 end
 
 class buffer_output buffer = object
