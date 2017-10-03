@@ -9,7 +9,7 @@ export CDPATH=
 
 # ------------------------------------------------------------------------------
 
-.PHONY: headers package check export tag
+.PHONY: headers package check export tag opam
 
 # ------------------------------------------------------------------------------
 
@@ -31,7 +31,6 @@ DATE     := $(shell /bin/date +%Y%m%d)
 BASE     := pprint
 PACKAGE  := $(BASE)-$(DATE)
 TARBALL  := $(shell pwd)/$(PACKAGE).tar.gz
-MD5      := $(shell if [ `which md5` ] ; then echo md5 ; else echo md5sum ; fi)
 
 package: all doc
 	rm -rf $(PACKAGE) $(TARBALL)
@@ -40,7 +39,6 @@ package: all doc
 	cp -r src/*.ml src/*.mli src/*.mllib src/Makefile src/META src/doc $(PACKAGE)/src
 	echo version = \"$(DATE)\" >> $(PACKAGE)/src/META
 	tar -c -v -z -f $(TARBALL) -X .exclude $(PACKAGE)
-	$(MD5) $(TARBALL)
 
 # ------------------------------------------------------------------------------
 
@@ -81,3 +79,47 @@ export:
 
 tag:
 	git tag -a $(DATE) -m "Release $(DATE)."
+
+# -------------------------------------------------------------------------
+
+# Utilities.
+
+MD5SUM  := $(shell if command -v md5 >/dev/null 2>/dev/null ; \
+                   then echo "md5 -r" ; else echo md5sum ; fi)
+
+# -------------------------------------------------------------------------
+
+# Updating the opam package.
+
+# This entry assumes that "make package" and "make export" have been
+# run on the same day.
+
+OPAM := $(HOME)/dev/opam-repository
+CSUM  = $(shell $(MD5SUM) $(BASE)-$(DATE).tar.gz | cut -d ' ' -f 1)
+
+opam:
+# Update my local copy of the opam repository.
+	@ echo "Updating local opam repository..."
+	@ cd $(OPAM) && \
+	  git fetch upstream && \
+	  git merge upstream/master
+# Create a new package, based on the last one.
+	@ echo "Creating a new package description $(BASE)-$(DATE)..."
+	@ cd $(OPAM)/packages/$(BASE) && \
+	  cp -r `ls | grep $(BASE) | tail -1` $(BASE).$(DATE)
+# Update the file "url".
+	@ cd $(OPAM)/packages/$(BASE)/$(BASE).$(DATE) && \
+	  rm url && \
+	  echo 'archive: "http://gallium.inria.fr/~fpottier/$(BASE)/$(BASE)-$(DATE).tar.gz"' >> url && \
+	  echo 'checksum: "$(CSUM)"' >> url
+# Copy the file "opam" from our repository to opam's.
+	@ cp -f opam $(OPAM)/packages/$(BASE)/$(BASE).$(DATE)
+# Prepare a commit.
+	@ echo "Preparing a new commit..."
+	@ cd $(OPAM)/packages/$(BASE) && \
+	  git add $(BASE).$(DATE) && \
+	  git status
+# Ask for review.
+	@ echo "If happy, please run:"
+	@ echo "  cd $(OPAM)/packages/$(BASE) && git commit -a && git push && firefox https://github.com/"
+	@ echo "and issue a pull request."
