@@ -9,7 +9,7 @@ export CDPATH=
 
 # ------------------------------------------------------------------------------
 
-.PHONY: package check export headers
+.PHONY: headers package check export tag
 
 # ------------------------------------------------------------------------------
 
@@ -74,3 +74,10 @@ export:
 	scp $(TARBALL) $(SERVER):$(WEBDIR)
 	ssh $(SERVER) "bash -c 'cd $(WEBDIR) && /bin/ln -sf $(PACKAGE).tar.gz $(BASE).tar.gz && rm -rf doc'"
 	scp -r src/doc $(SERVER):$(WEBDIR)
+
+# -------------------------------------------------------------------------
+
+# Creating a git tag.
+
+tag:
+	git tag -a $(DATE) -m "Release $(DATE)."
