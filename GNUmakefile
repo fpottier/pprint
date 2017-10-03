@@ -33,10 +33,11 @@ PACKAGE  := $(BASE)-$(DATE)
 TARBALL  := $(shell pwd)/$(PACKAGE).tar.gz
 MD5      := $(shell if [ `which md5` ] ; then echo md5 ; else echo md5sum ; fi)
 
-package: headers all doc
+package: all doc
 	rm -rf $(PACKAGE) $(TARBALL)
 	mkdir $(PACKAGE) && cp README.md AUTHORS LICENSE CHANGES Makefile $(PACKAGE)
-	mkdir $(PACKAGE)/src && cp src/*.ml src/*.mli src/*.mllib src/Makefile src/META $(PACKAGE)/src
+	mkdir $(PACKAGE)/src
+	cp -r src/*.ml src/*.mli src/*.mllib src/Makefile src/META src/doc $(PACKAGE)/src
 	echo version = \"$(DATE)\" >> $(PACKAGE)/src/META
 	tar -c -v -z -f $(TARBALL) -X .exclude $(PACKAGE)
 	$(MD5) $(TARBALL)
@@ -69,7 +70,7 @@ check:
 SERVER := yquem.inria.fr
 WEBDIR := public_html/$(BASE)
 
-export: package
+export:
 	scp $(PACKAGE).tar.gz $(SERVER):$(WEBDIR)
 	ssh $(SERVER) "bash -c 'cd $(WEBDIR) && /bin/ln -sf $(PACKAGE).tar.gz $(BASE).tar.gz && rm -rf doc'"
 	scp -r doc $(SERVER):$(WEBDIR)
