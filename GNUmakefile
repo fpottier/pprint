@@ -71,6 +71,6 @@ SERVER := yquem.inria.fr
 WEBDIR := public_html/$(BASE)
 
 export:
-	scp $(PACKAGE).tar.gz $(SERVER):$(WEBDIR)
+	scp $(TARBALL) $(SERVER):$(WEBDIR)
 	ssh $(SERVER) "bash -c 'cd $(WEBDIR) && /bin/ln -sf $(PACKAGE).tar.gz $(BASE).tar.gz && rm -rf doc'"
-	scp -r doc $(SERVER):$(WEBDIR)
+	scp -r src/doc $(SERVER):$(WEBDIR)
