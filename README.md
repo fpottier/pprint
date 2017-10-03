@@ -9,8 +9,8 @@ To install the latest released version of PPrint, it should be sufficient to typ
 ```
 
 To install PPrint from source, type:
-``
-  `make install
+```
+  make install
 ```
 The requirements are OCaml 4.02.0 or later, `ocamlbuild`, and `ocamlfind`.
 
