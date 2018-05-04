@@ -30,6 +30,10 @@ type document
 (** [empty] is the empty document. *)
 val empty: document
 
+type point = int * int
+
+type range = point * point 
+
 (** [char c] is a document that consists of the single character [c]. This
     character must not be a newline. *)
 val char: char -> document
@@ -102,6 +106,9 @@ val ifflat: document -> document -> document
     upper left corner is the current position. *)
 val align: document -> document
 
+(** [range doc] is the document [doc] plus range information *)
+val range: (range -> unit) -> document -> document
+
 (** {1 Rendering documents} *)
 
 (** This renderer sends its output into an output channel. *)
@@ -141,6 +148,7 @@ class type output = object
 
 end
 
+
 (** The rendering engine maintains the following internal state. Its structure
     is subject to change in future versions of the library. Nevertheless, it is
     exposed to the user who wishes to define custom documents. *)
@@ -161,11 +169,13 @@ type state = {
         is used (only) to determine whether the ribbon width constraint is
         respected. *)
 
+    mutable line: int;
+    (** The current line. *)
+
     mutable column: int;
     (** The current column. This field must be updated whenever something is
         sent to the output channel. It is used (only) to determine whether the
         width constraint is respected. *)
-
   }
 
 (** A custom document is defined by implementing the following methods. *)
