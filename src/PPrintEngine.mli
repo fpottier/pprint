@@ -157,8 +157,8 @@ type state = {
 
     mutable last_indent: int;
     (** The number of blanks that were printed at the beginning of the current
-        line. This field is updated (only) by the function [emit_hardline]. It
-        is used (only) to determine whether the ribbon width constraint is
+        line. This field is updated (only) when a hardline is emitted. It is
+        used (only) to determine whether the ribbon width constraint is
         respected. *)
 
     mutable column: int;
@@ -223,4 +223,3 @@ val pretty: output -> state -> int -> bool -> document -> unit
 (** [compact output doc] prints the document [doc]. See the documentation of
     the method [compact]. *)
 val compact: output -> document -> unit
-

@@ -94,8 +94,8 @@ type state = {
 
     mutable last_indent: int;
     (** The number of blanks that were printed at the beginning of the current
-        line. This field is updated (only) by the function [emit_hardline]. It
-        is used (only) to determine whether the ribbon width constraint is
+        line. This field is updated (only) when a hardline is emitted. It is
+        used (only) to determine whether the ribbon width constraint is
         respected. *)
 
     mutable column: int;
