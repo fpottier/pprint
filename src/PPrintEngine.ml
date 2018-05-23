@@ -77,6 +77,9 @@ class formatter_output fmt = object
 end
 
 (* ------------------------------------------------------------------------- *)
+type point = int * int
+
+type range = point * point 
 
 (** The rendering engine maintains the following internal state. Its structure
     is subject to change in future versions of the library. Nevertheless, it is
@@ -98,11 +101,13 @@ type state = {
         is used (only) to determine whether the ribbon width constraint is
         respected. *)
 
+    mutable line: int;
+    (** The current line. *)
+
     mutable column: int;
     (** The current column. This field must be updated whenever something is
         sent to the output channel. It is used (only) to determine whether the
         width constraint is respected. *)
-
   }
 
 (* ------------------------------------------------------------------------- *)
@@ -113,7 +118,8 @@ let initial rfrac width = {
   width = width;
   ribbon = max 0 (min width (truncate (float_of_int width *. rfrac)));
   last_indent = 0;
-  column = 0
+  line = 0;
+  column = 0;
 }
 
 (* ------------------------------------------------------------------------- *)
@@ -245,6 +251,8 @@ type document =
 
   | Align of requirement * document
 
+  | Range of (range -> unit) * document
+
   (* [Custom (req, f)] is a document whose appearance is user-defined. *)
 
   | Custom of custom
@@ -281,6 +289,8 @@ let rec requirement = function
          node is constructed -- so as to allow us to answer in constant time
          here. *)
       req
+  | Range (_, doc) ->
+      requirement doc 
   | Custom c ->
       c#requirement
 
@@ -394,6 +404,9 @@ let group x =
 let align x =
   Align (requirement x, x)
 
+let range f x =
+  Range (f, x)
+
 let custom c =
   (* Sanity check. *)
   assert (c#requirement >= 0);
@@ -451,6 +464,7 @@ let ok state flatten : bool =
 type cont =
   | KNil
   | KCons of int * bool * document * cont
+  | KRange of (range -> unit) * point * cont
 
 let rec pretty
   (output : output)
@@ -498,6 +512,7 @@ let rec pretty
       (* Emit a hardline. *)
       output#char '\n';
       blanks output indent;
+      state.line <- state.line + 1;
       state.column <- indent;
       state.last_indent <- indent;
       (* Continue. *)
@@ -506,11 +521,13 @@ let rec pretty
   | IfFlat (doc1, doc2) ->
       (* Pick an appropriate sub-document, based on the current flattening
          mode. *)
-      pretty output state indent flatten (if flatten then doc1 else doc2) cont
+      let doc' = if flatten then doc1 else doc2 in
+      pretty output state indent flatten doc' cont
 
   | Cat (_, doc1, doc2) ->
       (* Push the second document onto the continuation. *)
-      pretty output state indent flatten doc1 (KCons (indent, flatten, doc2, cont))
+      let cont' = KCons (indent, flatten, doc2, cont) in
+      pretty output state indent flatten doc1 cont'
 
   | Nest (_, j, doc) ->
       pretty output state (indent + j) flatten doc cont
@@ -537,6 +554,11 @@ let rec pretty
       (* assert (state.column > state.last_indent); *)
       pretty output state state.column flatten doc cont
 
+  | Range (f, doc) ->
+      let p0 = (state.line, state.column) in
+      let cont' = KRange (f, p0, cont) in
+      pretty output state state.column flatten doc cont'
+
   | Custom c ->
       (* Invoke the document's custom rendering function. *)
       c#pretty output state indent flatten;
@@ -550,6 +572,10 @@ and continue output state = function
       ()
   | KCons (indent, flatten, doc, cont) ->
       pretty output state indent flatten doc cont
+  | KRange (f, p0, cont) ->
+      let pn = (state.line, state.column) in
+      f (p0, pn);
+      continue output state cont
 
 (* Publish a version of [pretty] that does not take an explicit continuation.
    This function may be used by authors of custom documents. We do not expose
@@ -558,7 +584,7 @@ and continue output state = function
    through a custom document cannot be tail calls. *)
 
 let pretty output state indent flatten doc =
-  pretty output state indent flatten doc KNil
+  ignore (pretty output state indent flatten doc KNil)
 
 (* ------------------------------------------------------------------------- *)
 
@@ -591,6 +617,8 @@ let rec compact output doc cont =
   | Group (_, doc)
   | Align (_, doc) ->
       compact output doc cont
+  | Range (_, doc) ->
+      compact output doc cont
   | Custom c ->
       (* Invoke the document's custom rendering function. *)
       c#compact output;
@@ -619,7 +647,8 @@ end) = struct
   type channel = X.channel
   type dummy = document
   type document = dummy
-  let pretty rfrac width channel doc = pretty (X.output channel) (initial rfrac width) 0 false doc
+  let pretty rfrac width channel doc =
+    pretty (X.output channel) (initial rfrac width) 0 false doc
   let compact channel doc = compact (X.output channel) doc
 end
 
