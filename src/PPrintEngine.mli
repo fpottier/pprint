@@ -161,6 +161,10 @@ type state = {
         used (only) to determine whether the ribbon width constraint is
         respected. *)
 
+    mutable line: int;
+    (** The current line. This field is updated (only) when a hardline is
+        emitted. It is not used by the pretty-printing engine itself. *)
+
     mutable column: int;
     (** The current column. This field must be updated whenever something is
         sent to the output channel. It is used (only) to determine whether the

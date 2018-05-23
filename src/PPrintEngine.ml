@@ -98,6 +98,10 @@ type state = {
         used (only) to determine whether the ribbon width constraint is
         respected. *)
 
+    mutable line: int;
+    (** The current line. This field is updated (only) when a hardline is
+        emitted. It is not used by the pretty-printing engine itself. *)
+
     mutable column: int;
     (** The current column. This field must be updated whenever something is
         sent to the output channel. It is used (only) to determine whether the
@@ -113,6 +117,7 @@ let initial rfrac width = {
   width = width;
   ribbon = max 0 (min width (truncate (float_of_int width *. rfrac)));
   last_indent = 0;
+  line = 0;
   column = 0
 }
 
@@ -498,6 +503,7 @@ let rec pretty
       (* Emit a hardline. *)
       output#char '\n';
       blanks output indent;
+      state.line <- state.line + 1;
       state.column <- indent;
       state.last_indent <- indent;
       (* Continue. *)

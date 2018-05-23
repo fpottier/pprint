@@ -1,5 +1,10 @@
 # Changes
 
+## 2018/05/23
+
+* Add a `line` field to the `state` record. This is a potentially breaking
+  change; code that defines custom documents might need to be updated.
+
 ## 2017/10/03
 
 * Update the code and build options to use `-safe-string`. This means that
