@@ -102,6 +102,20 @@ val ifflat: document -> document -> document
     upper left corner is the current position. *)
 val align: document -> document
 
+(** A point is a pair of a line number and a column number. *)
+type point =
+  int * int
+
+(** A range is a pair of points. *)
+type range =
+  point * point
+
+(** [range hook doc] is printed exactly like the document [doc], but allows the
+    caller to register a hook that is applied, when the document is printed, to
+    the range occupied by this document in the output text. This offers a way of
+    mapping positions in the output text back to (sub)documents. *)
+val range: (range -> unit) -> document -> document
+
 (** {1 Rendering documents} *)
 
 (** This renderer sends its output into an output channel. *)

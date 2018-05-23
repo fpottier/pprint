@@ -2,8 +2,10 @@
 
 ## 2018/05/23
 
-* Add a `line` field to the `state` record. This is a potentially breaking
-  change; code that defines custom documents might need to be updated.
+* Add a `line` field to the `state` record, which can be read by the code
+  that implements custom documents. Add a `range` combinator that allows
+  retrieving the start and end points of a (sub)document in the output.
+  (Suggested by Victor Gomes.)
 
 ## 2017/10/03
 

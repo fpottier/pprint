@@ -11,6 +11,14 @@
 (*                                                                        *)
 (**************************************************************************)
 
+(** A point is a pair of a line number and a column number. *)
+type point =
+  int * int
+
+(** A range is a pair of points. *)
+type range =
+  point * point
+
 (* ------------------------------------------------------------------------- *)
 
 (* A type of integers with infinity. *)
@@ -250,6 +258,12 @@ type document =
 
   | Align of requirement * document
 
+  (* [Range (req, hook, doc)] is printed like [doc]. After it is printed, the
+     function [hook] is applied to the range that is occupied by [doc] in the
+     output. *)
+
+  | Range of requirement * (range -> unit) * document
+
   (* [Custom (req, f)] is a document whose appearance is user-defined. *)
 
   | Custom of custom
@@ -281,7 +295,8 @@ let rec requirement = function
   | Cat (req, _, _)
   | Nest (req, _, _)
   | Group (req, _)
-  | Align (req, _) ->
+  | Align (req, _)
+  | Range (req, _, _) ->
       (* These nodes store their requirement -- which is computed when the
          node is constructed -- so as to allow us to answer in constant time
          here. *)
@@ -399,6 +414,9 @@ let group x =
 let align x =
   Align (requirement x, x)
 
+let range hook x =
+  Range (requirement x, hook, x)
+
 let custom c =
   (* Sanity check. *)
   assert (c#requirement >= 0);
@@ -450,12 +468,14 @@ let ok state flatten : bool =
    manner in which the document is rendered. *)
 
 (* The code is written in tail-recursive style, so as to avoid running out of
-   stack space if the document is very deep. Its explicit continuation can be
-   viewed as a sequence of pending calls to [pretty]. *)
+   stack space if the document is very deep. Each [KCons] cell in a
+   continuation represents a pending call to [pretty]. Each [KRange] cell
+   represents a pending call to a user-provided range hook. *)
 
 type cont =
   | KNil
   | KCons of int * bool * document * cont
+  | KRange of (range -> unit) * point * cont
 
 let rec pretty
   (output : output)
@@ -543,6 +563,10 @@ let rec pretty
       (* assert (state.column > state.last_indent); *)
       pretty output state state.column flatten doc cont
 
+  | Range (_, hook, doc) ->
+      let start : point = (state.line, state.column) in
+      pretty output state indent flatten doc (KRange (hook, start, cont))
+
   | Custom c ->
       (* Invoke the document's custom rendering function. *)
       c#pretty output state indent flatten;
@@ -556,6 +580,10 @@ and continue output state = function
       ()
   | KCons (indent, flatten, doc, cont) ->
       pretty output state indent flatten doc cont
+  | KRange (hook, start, cont) ->
+      let finish : point = (state.line, state.column) in
+      hook (start, finish);
+      continue output state cont
 
 (* Publish a version of [pretty] that does not take an explicit continuation.
    This function may be used by authors of custom documents. We do not expose
@@ -595,7 +623,8 @@ let rec compact output doc cont =
   | IfFlat (doc, _)
   | Nest (_, _, doc)
   | Group (_, doc)
-  | Align (_, doc) ->
+  | Align (_, doc)
+  | Range (_, _, doc) ->
       compact output doc cont
   | Custom c ->
       (* Invoke the document's custom rendering function. *)
