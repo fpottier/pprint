@@ -15,7 +15,7 @@ DATE     := $(shell /bin/date +%Y%m%d)
 
 # The project's name and version number.
 BASE     := pprint
-PACKAGE  := $(BASE)-$(DATE)
+PACKAGE  := $(BASE).$(DATE)
 
 # The archive's URL (https).
 ARCHIVE  := https://github.com/fpottier/pprint/archive/$(DATE).tar.gz
@@ -76,6 +76,8 @@ export:
 
 # This entry assumes that "make package" and "make export" have been
 # run on the same day.
+
+# The "opam" file must have a "name" field that contains the package name.
 
 opam:
 	@ opam lint
