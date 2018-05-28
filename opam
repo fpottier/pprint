@@ -1,3 +1,4 @@
+name: "pprint"
 opam-version: "1.2"
 maintainer: "francois.pottier@inria.fr"
 authors: [
