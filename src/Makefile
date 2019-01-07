@@ -4,7 +4,7 @@ OCAMLBUILD := ocamlbuild -use-ocamlfind -classic-display
 OCAMLFIND  := ocamlfind
 DOCDIR     := doc
 MAIN       := PPrintTest
-TO_BUILD   := PPrintLib.cma PPrintLib.cmxa
+TO_BUILD   := PPrintLib.cma PPrintLib.cmxa PPrintMini.cma PPrintMini.cmxa
 
 all:
 	$(OCAMLBUILD) $(TO_BUILD)
@@ -12,7 +12,8 @@ all:
 install: all
 	$(OCAMLFIND) install pprint META \
 		$(patsubst %,_build/%,$(TO_BUILD)) \
-		_build/PPrintLib.a _build/*.cmx _build/*.cmi
+		_build/PPrintLib.a _build/PPrintMini.a \
+	        _build/*.cmx _build/*.cmi
 
 # [make uninstall] attempts to uninstall, but succeeds even if uninstallation
 # fails (probably because the package was not installed in the first place).
@@ -35,7 +36,8 @@ doc: all
 	  -I _build \
 	  -d $(DOCDIR) \
 	  -charset utf8 \
-	  PPrintRenderer.ml PPrintEngine.mli PPrintCombinators.mli PPrintOCaml.mli PPrint.ml
+	  PPrintRenderer.ml PPrintEngine.mli PPrintCombinators.mli PPrintOCaml.mli PPrint.ml \
+	  PPrintMini.ml
 
 test: all
 	$(OCAMLBUILD) $(MAIN).native
