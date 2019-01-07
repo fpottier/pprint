@@ -185,7 +185,7 @@ type state =
     (* The current column. *)
     mutable column: int;
     (* The output buffer. *)
-    mutable output: Buffer.t;
+    output: Buffer.t;
   }
 
 (* -------------------------------------------------------------------------- *)
