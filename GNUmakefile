@@ -4,7 +4,7 @@ include Makefile
 
 # Private Makefile for package maintenance.
 
-SHELL := bash
+SHELL := /bin/sh
 export CDPATH=
 
 # ------------------------------------------------------------------------------
