@@ -8,9 +8,9 @@ authors: [
 homepage: "https://github.com/fpottier/pprint"
 dev-repo: "git@github.com:fpottier/pprint.git"
 bug-reports: "francois.pottier@inria.fr"
-build: [make "all"]
-install: [make "install"]
-remove: [make "uninstall"]
+build: [make "-f" "Makefile" "all"]
+install: [make "-f" "Makefile" "install"]
+remove: [make "-f" "Makefile" "uninstall"]
 depends: [
          "ocamlfind" {build}
          "ocamlbuild" {build}
