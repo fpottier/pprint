@@ -78,12 +78,6 @@ let split n =
   n1, n2
 
 (* [choose xs] randomly and uniformly chooses between the elements of the
-   list [xs]. *)
-
-let choose xs =
-  List.nth xs (Random.int (List.length xs))
-
-(* [choose xs] randomly and uniformly chooses between the elements of the
    array [xs]. *)
 
 let choose xs =
@@ -206,7 +200,7 @@ module Test1 (E : ENGINE) = struct
   let () =
     let module B = Build(E) in
     let s = ref 0 in
-    for r = 1 to runs do
+    for _r = 1 to runs do
       let document = B.build (random n) in
       s := !s + measure document;
       let buffer = Buffer.create 32768 in
@@ -237,7 +231,7 @@ module Test2 (E1 : ENGINE) (E2 : ENGINE) = struct
   let () =
     let module B1 = Build(E1) in
     let module B2 = Build(E2) in
-    for r = 1 to runs do
+    for _r = 1 to runs do
       let document = random n in
       let document1 = B1.build document in
       let document2 = B2.build document in

@@ -608,7 +608,7 @@ let rec compact output doc cont =
       let len = String.length s in
       output#substring s 0 len;
       continue output cont
-  | FancyString (s, ofs, len, apparent_length) ->
+  | FancyString (s, ofs, len, _apparent_length) ->
       output#substring s ofs len;
       continue output cont
   | Blank n ->
