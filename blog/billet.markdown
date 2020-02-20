@@ -84,7 +84,7 @@ pretty.` will be printed on the current line if it fits, and on a new line
 otherwise. By the way, this document can be abbreviated as follows:
 
 ```ocaml
-flow 1 [
+flow (break 1) [
   string "This" ;
   string "is" ;
   string "pretty."
