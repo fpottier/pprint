@@ -15,4 +15,4 @@ To install PPrint from source, type:
 The requirements are OCaml 4.02.0 or later, `ocamlbuild`, and `ocamlfind`.
 
 The documentation for PPrint is built by `make doc` and is then found in the
-file `src/doc/index.html`.
+file `_build/default/_doc/_html/index.html`.

@@ -8,13 +8,12 @@ authors: [
 homepage: "https://github.com/fpottier/pprint"
 dev-repo: "git+ssh://git@github.com/fpottier/pprint.git"
 bug-reports: "francois.pottier@inria.fr"
-build: [make "-f" "Makefile" "all"]
-install: [make "-f" "Makefile" "install"]
-remove: [make "-f" "Makefile" "uninstall"]
+build: [
+  ["dune" "build" "-p" name "-j" jobs]
+]
 depends: [
   "ocaml" {>= "4.02"}
-  "ocamlfind" {build}
-  "ocamlbuild" {build}
+  "dune" { "1.11" }
 ]
 synopsis: "A pretty-printing combinator library and rendering engine"
 description: "This library offers a set of combinators for building so-called documents as
