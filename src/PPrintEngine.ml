@@ -80,7 +80,13 @@ end
 
 class formatter_output fmt = object
   method char = Format.pp_print_char fmt
-  method substring = fst (Format.pp_get_formatter_output_functions fmt ())
+  method substring str ofs len =
+    let str' =
+      if ofs = 0 && len = String.length str
+      then str
+      else String.sub str ofs len
+    in
+    Format.pp_print_string fmt str'
 end
 
 (* ------------------------------------------------------------------------- *)
