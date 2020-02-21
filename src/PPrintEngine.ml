@@ -79,14 +79,17 @@ class buffer_output buffer = object
 end
 
 class formatter_output fmt = object
-  method char = Format.pp_print_char fmt
+  method char = function
+    | '\n' -> Format.pp_force_newline fmt ()
+    | ' '  -> Format.pp_print_space fmt ()
+    | c    -> Format.pp_print_char fmt c
+
   method substring str ofs len =
-    let str' =
+    Format.pp_print_string fmt (
       if ofs = 0 && len = String.length str
       then str
       else String.sub str ofs len
-    in
-    Format.pp_print_string fmt str'
+    )
 end
 
 (* ------------------------------------------------------------------------- *)
