@@ -13,7 +13,7 @@ build: [
 ]
 depends: [
   "ocaml" {>= "4.02"}
-  "dune" { "1.11" }
+  "dune" {>= "1.3"}
 ]
 synopsis: "A pretty-printing combinator library and rendering engine"
 description: "This library offers a set of combinators for building so-called documents as
