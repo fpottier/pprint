@@ -85,7 +85,7 @@ class formatter_output fmt = object
     | c    -> Format.pp_print_char fmt c
 
   method substring str ofs len =
-    Format.pp_print_string fmt (
+    Format.pp_print_text fmt (
       if ofs = 0 && len = String.length str
       then str
       else String.sub str ofs len
