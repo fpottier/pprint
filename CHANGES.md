@@ -1,5 +1,17 @@
 # Changes
 
+## 2020/XX/XX
+
+* Change the behavior of `PPrint.ToFormatter` to use `Format.pp_print_text`
+  internally. This means that a newline character causes a call to
+  `Format.pp_force_newline`; a space character causes a call to
+  `Format.pp_print_space`; and every other character is printed using
+  `Format.pp_print_char`.
+
+* Switch to `dune`.
+
+* Avoid a few compilation warnings.
+
 ## 2018/05/23
 
 * Add a `line` field to the `state` record, which can be read by the code
