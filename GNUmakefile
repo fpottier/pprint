@@ -18,11 +18,11 @@ BASE     := pprint
 PACKAGE  := $(BASE).$(DATE)
 
 # The archive's URL (https).
-ARCHIVE  := https://github.com/fpottier/pprint/archive/$(DATE).tar.gz
+ARCHIVE  := https://github.com/fpottier/$(BASE)/archive/$(DATE).tar.gz
 
 # ------------------------------------------------------------------------------
 
-.PHONY: headers package export opam submit pin unpin
+.PHONY: headers export opam submit pin unpin
 
 # ------------------------------------------------------------------------------
 
@@ -35,21 +35,6 @@ headers:
 	for f in src/PPrint*.{ml,mli} ; do \
 	  $(HEADACHE) -h $(HEADER) $$f ; \
 	done
-
-# -------------------------------------------------------------------------
-
-# [make package] prepares a release.
-
-package:
-# Make sure the correct version can be installed.
-	@ make -C src reinstall
-# Update the version number in src/META.
-	@ echo "Setting version to $(DATE)."
-	@ mv src/META src/META.bak
-	@ grep -v version src/META.bak > src/META
-	@ echo version = \"$(DATE)\" >> src/META
-	@ rm -f src/META.bak
-	@ git commit -m "Update the version number." src/META
 
 # -------------------------------------------------------------------------
 
