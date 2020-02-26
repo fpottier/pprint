@@ -1,5 +1,9 @@
 {1 PPrint}
 
+{i {b PPrint}} is an OCaml library for pretty-printing textual documents.
+
+{{!PPrint}{b The full API is browsable here}}.
+
 {2:taste A taste of the layout language}
  
 At the heart of {!PPrint} is a little domain-specific language of
@@ -106,7 +110,7 @@ library, which itself is based on the ideas developed by Philip
 Wadler in the paper
 {{:http://homepages.inf.ed.ac.uk/wadler/papers/prettier/prettier.pdf}A Prettier Printer}.
 
-{i {b PPrint}} was written by François Pottier and Nicolas Pouillard, with
+{!section-pprint} was written by François Pottier and Nicolas Pouillard, with
 contributions by Yann Régis-Gianas, Gabriel Scherer, and Jonathan
 Protzenko.
 

@@ -14,6 +14,8 @@
 
 include PPrintEngine (** @inline *)
 
+(** {1:PPrintCombinators High level combinators} *)
+
 include PPrintCombinators (** @inline *)
 
 (** {1 Printing OCaml values} *)
