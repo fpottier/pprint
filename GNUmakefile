@@ -1,8 +1,8 @@
+# Private Makefile for package maintenance.
+
 include Makefile
 
 # ------------------------------------------------------------------------------
-
-# Private Makefile for package maintenance.
 
 SHELL := bash
 export CDPATH=
@@ -13,16 +13,37 @@ export CDPATH=
 # unless DATE is defined on the command line.
 DATE     := $(shell /bin/date +%Y%m%d)
 
-# The project's name and version number.
-BASE     := pprint
-PACKAGE  := $(BASE).$(DATE)
+# The project's name.
+THIS     := pprint
 
 # The archive's URL (https).
-ARCHIVE  := https://github.com/fpottier/$(BASE)/archive/$(DATE).tar.gz
+ARCHIVE  := https://github.com/fpottier/$(THIS)/archive/$(DATE).tar.gz
 
 # ------------------------------------------------------------------------------
 
-.PHONY: headers export opam submit pin unpin
+.PHONY: install
+install: all
+	dune install -p $(THIS)
+
+.PHONY: uninstall
+uninstall:
+	ocamlfind remove $(THIS) || true
+
+.PHONY: reinstall
+reinstall: uninstall
+	@ make install
+
+.PHONY: show
+show: reinstall
+	@ echo "#require \"pprint\";;\n#show PPrint;;" | ocaml
+
+.PHONY: pin
+pin:
+	opam pin add $(THIS) .
+
+.PHONY: unpin
+unpin:
+	opam pin remove $(THIS)
 
 # ------------------------------------------------------------------------------
 
@@ -31,6 +52,7 @@ ARCHIVE  := https://github.com/fpottier/$(BASE)/archive/$(DATE).tar.gz
 HEADACHE := headache
 HEADER   := header
 
+.PHONY: headers
 headers:
 	for f in src/PPrint*.{ml,mli} ; do \
 	  $(HEADACHE) -h $(HEADER) $$f ; \
@@ -38,9 +60,16 @@ headers:
 
 # -------------------------------------------------------------------------
 
-# Publish a release. (Remember to commit everything first!)
+# Publishing a release.
 
-export:
+.PHONY: release
+release:
+# Make sure the current version can be compiled and installed.
+	@ make uninstall
+	@ make clean
+	@ make install
+# Check the current package description.
+	@ opam lint
 # Check if everything has been committed.
 	@ if [ -n "$$(git status --porcelain)" ] ; then \
 	    echo "Error: there remain uncommitted changes." ; \
@@ -64,19 +93,11 @@ export:
 
 # The "opam" file must have a "name" field that contains the package name.
 
+.PHONY: opam
 opam:
 	@ opam lint
-	@ opam-publish prepare $(PACKAGE) $(ARCHIVE)
+	@ opam-publish prepare $(THIS).$(DATE) $(ARCHIVE)
 
+.PHONY: submit
 submit:
-	@ opam-publish submit $(PACKAGE)
-
-# -------------------------------------------------------------------------
-
-# Pinning.
-
-pin:
-	opam pin add $(PACKAGE) `pwd` -k git
-
-unpin:
-	opam pin remove $(PACKAGE)
+	@ opam-publish submit $(THIS).$(DATE)
