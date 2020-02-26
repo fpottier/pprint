@@ -98,7 +98,7 @@ HEADER   := header
 
 .PHONY: headers
 headers:
-	for f in src/PPrint*.{ml,mli} ; do \
+	for f in src/*.{ml,mli} ; do \
 	  $(HEADACHE) -h $(HEADER) $$f ; \
 	done
 
