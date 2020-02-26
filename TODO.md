@@ -1,3 +1,5 @@
+* Fix the warnings produced by `make doc`. Review its output.
+
 * Update the private `Makefile` so as to publish the package documentation
   on yquem (or gitlab?).
 
