@@ -14,5 +14,5 @@ test:
 	dune runtest
 
 bench:
-	dune build ./src/PPrintBench.exe
-	time dune exec ./src/PPrintBench.exe
+	dune build ./bench/PPrintBench.exe
+	time dune exec ./bench/PPrintBench.exe
