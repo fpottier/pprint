@@ -10,8 +10,12 @@
 (*  License, with an exception, as described in the file LICENSE.         *)
 (**************************************************************************)
 
-(** A package of all of the above. *)
+(* A package of all of the above. *)
 
-include PPrintEngine
-include PPrintCombinators
+include PPrintEngine (** @inline *)
+
+include PPrintCombinators (** @inline *)
+
+(** {1 Printing OCaml values} *)
+
 module OCaml = PPrintOCaml
