@@ -36,24 +36,23 @@ let document =
       paragraph "This is an adaptation of Daan Leijen's \"PPrint\" library,
         which itself is based on the ideas developed by Philip Wadler in
         \"A Prettier Printer\". For more information about Wadler's and Leijen's work,
-        please consult the following references:"
+        please consult the following reference:"
       ^^
       nest 2 (
 	twice (break 1)
 	^^
 	separate_map (break 1) (fun s -> nest 2 (url s)) [
-	  "http://www.cs.uu.nl/~daan/pprint.html";
 	  "http://homepages.inf.ed.ac.uk/wadler/papers/prettier/prettier.pdf";
 	]
       )
       ^^
       twice (break 1)
       ^^
-      paragraph "To install PPrint, type \"make -C src install\". ocamlfind is required."
+      paragraph "To install PPrint, type \"opam install pprint\"."
       ^^
       twice (break 1)
       ^^
-      paragraph "The documentation for PPrint is built by \"make doc\" and is found in the file doc/index.html."
+      paragraph "The documentation for PPrint is built by \"make doc\"."
     )
   ^^
   hardline
