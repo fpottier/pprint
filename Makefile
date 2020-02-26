@@ -1,4 +1,18 @@
-.PHONY: all install uninstall reinstall clean doc test
+.PHONY: all clean doc test bench
 
-all install uninstall reinstall clean doc test:
-	$(MAKE) -C src $@
+all:
+	dune build
+
+clean:
+	dune clean
+
+doc:
+	dune build @doc
+	@echo You can find the documentation in _build/default/_doc/_html/index.html
+
+test:
+	dune runtest
+
+bench:
+	dune build ./src/PPrintBench.exe
+	time dune exec ./src/PPrintBench.exe

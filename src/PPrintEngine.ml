@@ -79,8 +79,17 @@ class buffer_output buffer = object
 end
 
 class formatter_output fmt = object
-  method char = Format.pp_print_char fmt
-  method substring = fst (Format.pp_get_formatter_output_functions fmt ())
+  method char = function
+    | '\n' -> Format.pp_force_newline fmt ()
+    | ' '  -> Format.pp_print_space fmt ()
+    | c    -> Format.pp_print_char fmt c
+
+  method substring str ofs len =
+    Format.pp_print_text fmt (
+      if ofs = 0 && len = String.length str
+      then str
+      else String.sub str ofs len
+    )
 end
 
 (* ------------------------------------------------------------------------- *)
@@ -608,7 +617,7 @@ let rec compact output doc cont =
       let len = String.length s in
       output#substring s 0 len;
       continue output cont
-  | FancyString (s, ofs, len, apparent_length) ->
+  | FancyString (s, ofs, len, _apparent_length) ->
       output#substring s ofs len;
       continue output cont
   | Blank n ->

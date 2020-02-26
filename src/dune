@@ -1,0 +1,15 @@
+(library
+ (name pprint)
+ (public_name pprint)
+ (modules PPrint PPrintCombinators PPrintEngine PPrintOCaml PPrintRenderer)
+ (wrapped false))
+
+(executable
+ (name PPrintBench)
+ (modules OldPPrintEngine Size PPrintBench)
+ (libraries unix pprint))
+
+(test
+ (name PPrintTest)
+ (modules PPrintTest)
+ (libraries unix pprint))
