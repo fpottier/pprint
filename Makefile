@@ -62,6 +62,35 @@ unpin:
 
 # ------------------------------------------------------------------------------
 
+# [make versions] compiles the package under many versions of OCaml,
+# whose list is specified below.
+
+# This requires appropriate opam switches to exist. A missing switch
+# can be created like this:
+#   opam switch create 4.03.0
+
+VERSIONS := \
+  4.02.3 \
+  4.03.0 \
+  4.04.2 \
+  4.05.0 \
+  4.06.1 \
+  4.07.1 \
+  4.08.1 \
+  4.09.0 \
+  4.09.0+bytecode-only \
+  4.10.0 \
+
+.PHONY: versions
+versions:
+	@(echo "(lang dune 2.0)" && \
+	  for v in $(VERSIONS) ; do \
+	    echo "(context (opam (switch $$v)))" ; \
+	  done) > dune-workspace.versions
+	@ dune build --workspace dune-workspace.versions
+
+# ------------------------------------------------------------------------------
+
 # [make headers] updates the headers.
 
 HEADACHE := headache
