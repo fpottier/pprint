@@ -1,7 +1,7 @@
 .PHONY: all clean doc test bench
 
 all:
-	dune build -p pprint
+	dune build
 
 clean:
 	dune clean
