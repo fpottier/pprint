@@ -158,17 +158,17 @@ val url: string -> document
 val hang: int -> document -> document
 
 (** [prefix n b left right] has the following flat layout:
-{[
-left right
-]}
-and the following non-flat layout:
-{[
-left
-  right
-]}
-The parameter [n] controls the nesting of [right] (when not flat).
-The parameter [b] controls the number of spaces between [left] and [right]
-(when flat).
+    {[
+      left right
+    ]}
+    and the following non-flat layout:
+    {[
+      left
+        right
+    ]}
+    The parameter [n] controls the nesting of [right] (when not flat).
+    The parameter [b] controls the number of spaces between [left] and [right]
+    (when flat).
  *)
 val prefix: int -> int -> document -> document -> document
 
@@ -176,33 +176,33 @@ val prefix: int -> int -> document -> document -> document
 val jump: int -> int -> document -> document
 
 (** [infix n b middle left right] has the following flat layout:
-{[
-left middle right
-]}
-and the following non-flat layout:
-{[
-left middle
-  right
-]}
-The parameter [n] controls the nesting of [right] (when not flat).
-The parameter [b] controls the number of spaces between [left] and [middle]
-(always) and between [middle] and [right] (when flat).
+    {[
+      left middle right
+    ]}
+    and the following non-flat layout:
+    {[
+      left middle
+        right
+    ]}
+    The parameter [n] controls the nesting of [right] (when not flat).
+    The parameter [b] controls the number of spaces between [left] and [middle]
+    (always) and between [middle] and [right] (when flat).
 *)
 val infix: int -> int -> document -> document -> document -> document
 
 (** [surround n b opening contents closing] has the following flat layout:
-{[
-opening contents closing
-]}
-and the following non-flat layout:
-{[
-opening
-  contents
-closing
-]}
-The parameter [n] controls the nesting of [contents] (when not flat).
-The parameter [b] controls the number of spaces between [opening] and [contents]
-and between [contents] and [closing] (when flat).
+    {[
+      opening contents closing
+    ]}
+    and the following non-flat layout:
+    {[
+      opening
+        contents
+        closing
+    ]}
+    The parameter [n] controls the nesting of [contents] (when not flat).
+    The parameter [b] controls the number of spaces between [opening] and [contents]
+    and between [contents] and [closing] (when flat).
 *)
 val surround: int -> int -> document -> document -> document -> document
 
