@@ -1,6 +1,6 @@
 # Changes
 
-## 2020/XX/XX
+## 2020/02/26
 
 * Change the behavior of `PPrint.ToFormatter` to use `Format.pp_print_text`
   internally. This means that a newline character causes a call to
