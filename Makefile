@@ -132,16 +132,9 @@ release:
 
 # Updating the opam package.
 
-# This entry assumes that "make package" and "make export" have been
-# run on the same day.
-
-# The "opam" file must have a "name" field that contains the package name.
+# This entry assumes that [make release] has been run on the same day.
 
 .PHONY: opam
 opam:
 	@ opam lint
-	@ opam-publish prepare $(THIS).$(DATE) $(ARCHIVE)
-
-.PHONY: submit
-submit:
-	@ opam-publish submit $(THIS).$(DATE)
+	@ opam publish -v $(DATE) $(THIS) $(ARCHIVE)
