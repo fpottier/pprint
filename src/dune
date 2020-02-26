@@ -1,5 +1,6 @@
 (library
- (name pprint)
- (public_name pprint)
- (modules PPrint PPrintCombinators PPrintEngine PPrintOCaml PPrintRenderer)
- (wrapped false))
+  (name pprint)
+  (public_name pprint)
+  (modules :standard \ PPrintMini)
+  (wrapped false)
+)
