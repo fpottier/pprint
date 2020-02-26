@@ -3,8 +3,3 @@
  (public_name pprint)
  (modules PPrint PPrintCombinators PPrintEngine PPrintOCaml PPrintRenderer)
  (wrapped false))
-
-(test
- (name PPrintTest)
- (modules PPrintTest)
- (libraries unix pprint))
