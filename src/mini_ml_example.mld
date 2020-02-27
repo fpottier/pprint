@@ -54,46 +54,96 @@ Which will also serve as test cases for our printing-combinators:
 {1 Defining our printing combinators}
 
 {[
-  let print_const = function
-    | Int i -> PPrint.string (string_of_int i)
-    | String s ->
-      let open PPrint in
-      dquote ^^ string s ^^ dquote
-  
-  let print_pat = function
-    | Any -> PPrint.string "_"
-    | Var s -> PPrint.string s
-    | Const c -> print_const c
-  
-  let rec print_expr = function
-    | Const c -> print_const c
-    | Var s -> PPrint.string s
-    | Let (name, e1, e2) ->
-      let open PPrint in
-      (* TODO(explain): if I don't add this group around everything, lets are
-         never printed on one line, even tiny ones... *)
-      group (
-        string "let " ^^ string name ^^ string " =" ^^
-        (nest 2 (break 1 ^^ group (print_expr e1)))
-        ^/^ string "in" ^/^ group (print_expr e2)
-      )
-    | Match (arg, cases) ->
-      let open PPrint in
-      group (
-        string "match" ^^
-        nest 2 (break 1 ^^ group (print_expr arg)) ^/^
-        string "with"
-      ) ^^
-      ifflat space (hardline ^^ string "| ") ^^
-      separate_map (break 1 ^^ string "| ") print_case cases
-  
-  and print_case (pat, exp) =
-    let open PPrint in
-    nest 2 
-      (prefix 2 1
-         (group ((print_pat pat) ^/^ (string "->")))
-         (print_expr exp))
+  open PPrint
 ]}
+
+{2 Basic blocks}
+
+Constants and variables aren't very interesting: they are just atomic documents
+as already seen in {!page-index.section-taste}.
+
+{[
+let print_const = function
+  | Int i -> string (string_of_int i)
+  | String s -> dquote ^^ string s ^^ dquote
+
+let print_var s = string s
+]}
+
+{2 Complex structures}
+
+The [Let] and [Match] constructs are more interesting, there is a variety of
+ways we could display them: as compactly as possible, with as many spaces as
+possible, etc.
+
+{3 The [Let] construct}
+
+Here we are aiming for a middle ground:
+- if the whole construct fits on one line, then do so
+- if it doesn't, then the lhs, the bound expression, the [in] keyword and the
+  body should be on different lines. Note that in this case we want the bound
+  expression to be indented.
+- finally, if the left-hand side doesn't fit on one line, then the [let], the
+  name and the [=] should also be on different lines.
+
+This can be expressed with the following grouping and nesting structure:
+{[
+let rec print_let binding_name bound_expr body =
+  (* TODO(explain): if I don't add this group around everything, lets are
+     never printed on one line, even tiny ones... *)
+  group (
+    group (string "let" ^/^ string binding_name ^/^ string "=") ^^
+    (nest 2 (break 1 ^^ group (print_expr bound_expr)))
+    ^/^ string "in" ^/^ group (print_expr body)
+  )
+]}
+
+{3 The [Match] construct}
+
+Once again: we fit the whole match on one line if we can, omitting the pipe
+before the first pattern then, or we put each case on a separate line :
+{[
+and print_match arg cases =
+    group (
+      string "match" ^^
+      nest 2 (break 1 ^^ group (print_expr arg)) ^/^
+      string "with"
+    ) ^^
+    ifflat space (hardline ^^ string "| ") ^^
+    separate_map (break 1 ^^ string "| ") print_case cases
+]}
+
+To display cases, we follow the same idea: if it doesn't fit on one line, we
+put the body on a different line, and indent it by 4 spaces.
+
+However, if the left-hand-side itself doesn't fit on one line, we want to put
+the arrow on its own line, but indent it only by 2 spaces.
+
+In the end, the code looks like this:
+{[
+and print_case (pat, exp) =
+  let open PPrint in
+  nest 2 
+    (prefix 2 1
+       (group ((print_pattern pat) ^/^ (string "->")))
+       (print_expr exp))
+]}
+
+{2 Putting it all together}
+
+{[
+and print_pattern = function
+  | Any -> underscore
+  | Var s -> print_var s
+  | Const c -> print_const c
+
+and print_expr = function
+  | Const c -> print_const c
+  | Var s -> print_var s
+  | Let (name, e1, e2) -> print_let name e1 e2
+  | Match (arg, cases) -> print_match arg cases
+]}
+
 
 {1 Doing the actual printing}
 
