@@ -1,0 +1,138 @@
+{0 Pretty printing ASTs}
+
+In this example, we are going to define a pretty printer for a small language
+with let-bindings and pattern matching.
+
+{1 The AST}
+
+{[
+    type const = Int of int | String of string
+    
+    type pattern = Any | Var of string | Const of const
+    
+    type expr =
+      | Const of const
+      | Var of string
+      | Let of string * expr * expr
+      | Match of expr * (pattern * expr) list
+]}
+
+{2 Some example programs}
+
+Which will also serve as test cases for our printing-combinators:
+{[
+  let small_test =
+    Let ("x",
+         Match (Var "free", [ Const (String "foo"), Const (Int 0)
+                            ; Any, Const (Int 42) ]),
+         Var "x"
+        )
+  
+  let test =
+    Let ("some_longer_variable_name",
+         Match (Var "free", [ Const (String "foo"), Const (Int 0)
+                            ; Any, Const (Int 42) ]),
+         Var "some_longer_variable_name"
+        )
+  
+  let large_test =
+    Let (
+      "x",
+      Match (
+        Var "free",
+        [ Const (String "foo bar lol"), Const (String "ok")
+        ; Const (String "bar baz test"), Const (String "ko")
+        ; Var "otherwise_a_very_long_var_name",
+          Var "otherwise_a_very_long_var_name"
+        ; Var "otherwise_a_very_very_very_very_very_very_very_long_var_name",
+          Var "otherwise_a_very_very_very_very_very_very_very_long_var_name" ]
+      ),
+      Var "x"
+    )
+]}
+
+{1 Defining our printing combinators}
+
+{[
+  let print_const = function
+    | Int i -> PPrint.string (string_of_int i)
+    | String s ->
+      let open PPrint in
+      dquote ^^ string s ^^ dquote
+  
+  let print_pat = function
+    | Any -> PPrint.string "_"
+    | Var s -> PPrint.string s
+    | Const c -> print_const c
+  
+  let rec print_expr = function
+    | Const c -> print_const c
+    | Var s -> PPrint.string s
+    | Let (name, e1, e2) ->
+      let open PPrint in
+      (* TODO(explain): if I don't add this group around everything, lets are
+         never printed on one line, even tiny ones... *)
+      group (
+        string "let " ^^ string name ^^ string " =" ^^
+        (nest 2 (break 1 ^^ group (print_expr e1)))
+        ^/^ string "in" ^/^ group (print_expr e2)
+      )
+    | Match (arg, cases) ->
+      let open PPrint in
+      group (
+        string "match" ^^
+        nest 2 (break 1 ^^ group (print_expr arg)) ^/^
+        string "with"
+      ) ^^
+      ifflat space (hardline ^^ string "| ") ^^
+      separate_map (break 1 ^^ string "| ") print_case cases
+  
+  and print_case (pat, exp) =
+    let open PPrint in
+    nest 2 
+      (prefix 2 1
+         (group ((print_pat pat) ^/^ (string "->")))
+         (print_expr exp))
+]}
+
+{1 Doing the actual printing}
+
+{b TODO: Clearly I haven't understood how the ribbon is working; while I should
+read the paper, not every user is going to want to do that, and we should
+probably provide some more explanation here.}
+
+{[
+  let () =
+    PPrint.ToChannel.pretty 10. 60 stdout (print_expr small_test);
+    print_newline ();
+    print_newline ();
+    PPrint.ToChannel.pretty 10. 60 stdout (print_expr test);
+    print_newline ();
+    print_newline ();
+    PPrint.ToChannel.pretty 10. 60 stdout (print_expr large_test);
+    print_newline ();
+    flush stdout
+]}
+
+{2 The result}
+
+{v
+let x = match free with "foo" -> 0 | _ -> 42 in x
+
+let some_longer_variable_name =
+  match free with "foo" -> 0 | _ -> 42
+in
+some_longer_variable_name
+
+let x =
+  match free with
+  | "foo bar lol" -> "ok"
+  | "bar baz test" -> "ko"
+  | otherwise_a_very_long_var_name ->
+      otherwise_a_very_long_var_name
+  | otherwise_a_very_very_very_very_very_very_very_long_var_name
+    ->
+      otherwise_a_very_very_very_very_very_very_very_long_var_name
+in
+x
+v}
