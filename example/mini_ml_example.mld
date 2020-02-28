@@ -6,15 +6,15 @@ with let-bindings and pattern matching.
 {1 The AST}
 
 {[
-    type const = Int of int | String of string
-    
-    type pattern = Any | Var of string | Const of const
-    
-    type expr =
-      | Const of const
-      | Var of string
-      | Let of string * expr * expr
-      | Match of expr * (pattern * expr) list
+  type const = Int of int | String of string
+  
+  type pattern = Any | Var of string | Const of const
+  
+  type expr =
+    | Const of const
+    | Var of string
+    | Let of string * expr * expr
+    | Match of expr * (pattern * expr) list
 ]}
 
 {2 Some example programs}
@@ -63,11 +63,11 @@ Constants and variables aren't very interesting: they are just atomic documents
 as already seen in {!page-index.section-taste}.
 
 {[
-let print_const = function
-  | Int i -> string (string_of_int i)
-  | String s -> dquote ^^ string s ^^ dquote
-
-let print_var s = string s
+  let print_const = function
+    | Int i -> string (string_of_int i)
+    | String s -> dquote ^^ string s ^^ dquote
+  
+  let print_var s = string s
 ]}
 
 {2 Complex structures}
@@ -88,14 +88,14 @@ Here we are aiming for a middle ground:
 
 This can be expressed with the following grouping and nesting structure:
 {[
-let rec print_let binding_name bound_expr body =
-  (* TODO(explain): if I don't add this group around everything, lets are
-     never printed on one line, even tiny ones... *)
-  group (
-    group (string "let" ^/^ string binding_name ^/^ string "=") ^^
-    (nest 2 (break 1 ^^ group (print_expr bound_expr)))
-    ^/^ string "in" ^/^ group (print_expr body)
-  )
+  let rec print_let binding_name bound_expr body =
+    (* TODO(explain): if I don't add this group around everything, lets are
+       never printed on one line, even tiny ones... *)
+    group (
+      group (string "let" ^/^ string binding_name ^/^ string "=") ^^
+      (nest 2 (break 1 ^^ group (print_expr bound_expr)))
+      ^/^ string "in" ^/^ group (print_expr body)
+    )
 ]}
 
 {3 The [Match] construct}
@@ -103,7 +103,7 @@ let rec print_let binding_name bound_expr body =
 Once again: we fit the whole match on one line if we can, omitting the pipe
 before the first pattern then, or we put each case on a separate line :
 {[
-and print_match arg cases =
+  and print_match arg cases =
     group (
       string "match" ^^
       nest 2 (break 1 ^^ group (print_expr arg)) ^/^
@@ -121,27 +121,27 @@ the arrow on its own line, but indent it only by 2 spaces.
 
 In the end, the code looks like this:
 {[
-and print_case (pat, exp) =
-  let open PPrint in
-  nest 2 
-    (prefix 2 1
-       (group ((print_pattern pat) ^/^ (string "->")))
-       (print_expr exp))
+  and print_case (pat, exp) =
+    let open PPrint in
+    nest 2 
+      (prefix 2 1
+         (group ((print_pattern pat) ^/^ (string "->")))
+         (print_expr exp))
 ]}
 
 {2 Putting it all together}
 
 {[
-and print_pattern = function
-  | Any -> underscore
-  | Var s -> print_var s
-  | Const c -> print_const c
-
-and print_expr = function
-  | Const c -> print_const c
-  | Var s -> print_var s
-  | Let (name, e1, e2) -> print_let name e1 e2
-  | Match (arg, cases) -> print_match arg cases
+  and print_pattern = function
+    | Any -> underscore
+    | Var s -> print_var s
+    | Const c -> print_const c
+  
+  and print_expr = function
+    | Const c -> print_const c
+    | Var s -> print_var s
+    | Let (name, e1, e2) -> print_let name e1 e2
+    | Match (arg, cases) -> print_match arg cases
 ]}
 
 
