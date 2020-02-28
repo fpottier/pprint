@@ -27,6 +27,10 @@ bench:
 	dune build ./bench/PPrintBench.exe
 	time dune exec ./bench/PPrintBench.exe
 
+.PHONY: example
+example:
+	dune exec ./example/mini_ml_example.exe
+
 # ------------------------------------------------------------------------------
 
 # The version number is automatically set to the current date,
