@@ -105,7 +105,7 @@ one could work around this limitation by adding a new document constructor
 whose argument is a suspended document computation.
 
 
-{2 A more concrete example}
+{2 A self-contained example}
 
 In {{!page-mini_ml_example}this example} we define a pretty-printer for a small
 language with let-bindings and pattern matching.
