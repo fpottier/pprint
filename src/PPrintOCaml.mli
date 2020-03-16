@@ -72,13 +72,29 @@ val bool : bool -> representation
     [f]. *)
 val option : ('a -> representation) -> 'a option -> representation
 
-(** [list f xs] is a representation of the list [xs], where the representation
-    of each element is computed by the function [f]. *)
+(** [list f xs] is a representation of the list [xs], where the
+    representation of each element is computed by the function [f].
+    If the whole list fits on a single line, then it is printed on
+    a single line; otherwise each element is printed on a separate
+    line. *)
 val list : ('a -> representation) -> 'a list -> representation
 
+(** [flowing_list f xs] is a representation of the list [xs], where the
+    representation of each element is computed by the function [f]. As
+    many elements are possible are printed on each line. *)
+val flowing_list : ('a -> representation) -> 'a list -> representation
+
 (** [array f xs] is a representation of the array [xs], where the
-    representation of each element is computed by the function [f]. *)
+    representation of each element is computed by the function [f].
+    If the whole array fits on a single line, then it is printed on
+    a single line; otherwise each element is printed on a separate
+    line. *)
 val array : ('a -> representation) -> 'a array -> representation
+
+(** [flowing_array f xs] is a representation of the array [xs], where
+    the representation of each element is computed by the function [f].
+    As many elements are possible are printed on each line. *)
+val flowing_array : ('a -> representation) -> 'a array -> representation
 
 (** [ref r] is a representation of the reference [r], where the
     representation of the content is computed by the function [f]. *)
@@ -86,4 +102,3 @@ val ref : ('a -> representation) -> 'a ref -> representation
 
 (** [unknown t _] is a representation of an unknown value of type [t]. *)
 val unknown : type_name -> 'a -> representation
-

@@ -25,7 +25,7 @@ type tag = int
    as opposed to [arbitrary_string], because the strings that we produce will
    never contain a newline character. *)
 
-let dsprintf format = 
+let dsprintf format =
   ksprintf string format
 
 (* ------------------------------------------------------------------------- *)
@@ -122,8 +122,18 @@ let option f = function
 let list f xs =
   seq2 lbracket semi rbracket f xs
 
+let flowing_list f xs =
+  group (lbracket ^^ space ^^ nest 2 (
+    flow_map (semi ^^ break 1) f xs
+  ) ^^ space ^^ rbracket)
+
 let array f xs =
   seq2 lbracketbar semi rbracketbar f (Array.to_list xs)
+
+let flowing_array f xs =
+  group (lbracketbar ^^ space ^^ nest 2 (
+    flow_map (semi ^^ break 1) f (Array.to_list xs)
+  ) ^^ space ^^ rbracketbar)
 
 let ref f x =
   record "ref" ["contents", f !x]
@@ -154,4 +164,3 @@ let string =
 
 let unknown tyname _ =
   dsprintf "<abstr:%s>" tyname
-

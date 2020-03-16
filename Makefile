@@ -54,11 +54,11 @@ show: reinstall
 
 .PHONY: pin
 pin:
-	opam pin add $(THIS) .
+	opam pin add $(THIS) . --yes
 
 .PHONY: unpin
 unpin:
-	opam pin remove $(THIS)
+	opam pin remove $(THIS) --yes
 
 # ------------------------------------------------------------------------------
 

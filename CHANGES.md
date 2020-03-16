@@ -1,5 +1,9 @@
 # Changes
 
+## 2020/03/16
+
+* New functions `PPrint.OCaml.flowing_list` and `PPrint.OCaml.flowing_array`.
+
 ## 2020/02/26
 
 * Change the behavior of `PPrint.ToFormatter` to use `Format.pp_print_text`
