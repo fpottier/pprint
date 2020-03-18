@@ -14,7 +14,7 @@ To install PPrint from source, type:
 ```
 The requirements are OCaml 4.02 or later and `dune` 1.3 or later.
 
-The documentation for PPrint is built by `make doc` and is then found in the
+The documentation is built by `make doc` and is then found in the
 file `_build/default/_doc/_html/index.html`.
 
 The [documentation of the latest released
