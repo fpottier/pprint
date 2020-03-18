@@ -158,7 +158,8 @@ val url: string -> document
    box forms a hanging indent. *)
 val hang: int -> document -> document
 
-(** [prefix n b left right] has the following flat layout: {[
+(** [prefix n b left right] has the following flat layout:
+{[
 left right
 ]}
 and the following non-flat layout:
@@ -175,10 +176,12 @@ val prefix: int -> int -> document -> document -> document
 (** [jump n b right] is equivalent to [prefix n b empty right]. *)
 val jump: int -> int -> document -> document
 
-(** [infix n b middle left right] has the following flat layout: {[
+(** [infix n b middle left right] has the following flat layout:
+{[
 left middle right
 ]}
-and the following non-flat layout: {[
+and the following non-flat layout:
+{[
 left middle
   right
 ]}
@@ -188,10 +191,12 @@ The parameter [b] controls the number of spaces between [left] and [middle]
 *)
 val infix: int -> int -> document -> document -> document -> document
 
-(** [surround n b opening contents closing] has the following flat layout: {[
+(** [surround n b opening contents closing] has the following flat layout:
+{[
 opening contents closing
 ]}
-and the following non-flat layout: {[
+and the following non-flat layout:
+{[
 opening
   contents
 closing
@@ -232,4 +237,3 @@ val ( ^/^ ) : document -> document -> document
 
 (** [x ^//^ y] is a short-hand for [prefix 2 1 x y]. *)
 val ( ^//^ ) : document -> document -> document
-
