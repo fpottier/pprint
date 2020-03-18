@@ -15,7 +15,8 @@ doc:
 
 .PHONY: export
 export: doc
-	scp -r _build/default/_doc/_html $Y:public_html/pprint/doc
+	ssh yquem.inria.fr rm -rf public_html/$(THIS)/doc
+	scp -r _build/default/_doc/_html yquem.inria.fr:public_html/$(THIS)/doc
 
 .PHONY: test
 test:
