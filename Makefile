@@ -13,6 +13,10 @@ doc:
 	dune build @doc
 	@echo You can find the documentation in _build/default/_doc/_html/index.html
 
+.PHONY: export
+export: doc
+	scp -r _build/default/_doc/_html $Y:public_html/pprint/doc
+
 .PHONY: test
 test:
 	dune runtest
@@ -133,6 +137,8 @@ release:
 # Updating the opam package.
 
 # This entry assumes that [make release] has been run on the same day.
+
+# Once the opam package has been published, run [make export].
 
 .PHONY: opam
 opam:
