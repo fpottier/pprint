@@ -18,5 +18,5 @@ The documentation for PPrint is built by `make doc` and is then found in the
 file `_build/default/_doc/_html/index.html`.
 
 The [documentation of the latest released
-version](http://cambium.inria.fr/~fpottier/pprint/doc/pprint/PPrint/)
+version](http://cambium.inria.fr/~fpottier/pprint/doc/pprint/PPrint/index.html)
 is also available online.
