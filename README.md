@@ -16,3 +16,7 @@ The requirements are OCaml 4.02 or later and `dune` 1.3 or later.
 
 The documentation for PPrint is built by `make doc` and is then found in the
 file `_build/default/_doc/_html/index.html`.
+
+The [documentation of the latest released
+version](http://cambium.inria.fr/~fpottier/pprint/doc/pprint/PPrint/)
+is also available online.
