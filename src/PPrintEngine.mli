@@ -59,6 +59,10 @@ val fancysubstring : string -> int -> int -> int -> document
     This string must not contain a newline. *)
 val utf8string: string -> document
 
+(** [utf8format format <args>...] is equivalent to
+    [utf8string (Printf.sprintf format <args>...)]. *)
+val utf8format: ('a, unit, string, document) format4 -> 'a
+
 (** [hardline] is a forced newline document. This document forces all enclosing
     groups to be printed in non-flattening mode. In other words, any enclosing
     groups are dissolved. *)

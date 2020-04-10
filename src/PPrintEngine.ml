@@ -360,6 +360,9 @@ let utf8_length s =
 let utf8string s =
   fancystring s (utf8_length s)
 
+let utf8format f =
+  Printf.ksprintf utf8string f
+
 let hardline =
   HardLine
 

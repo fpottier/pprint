@@ -1,5 +1,9 @@
 # Changes
 
+## 2020/04/10
+
+* New function `PPrint.utf8format`.
+
 ## 2020/03/16
 
 * New functions `PPrint.OCaml.flowing_list` and `PPrint.OCaml.flowing_array`.
