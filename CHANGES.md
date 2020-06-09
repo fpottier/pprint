@@ -1,5 +1,9 @@
 # Changes
 
+## 2020/XX/XX
+
+* New function `PPrint.OCaml.unit`.
+
 ## 2020/04/10
 
 * New function `PPrint.utf8format`.
