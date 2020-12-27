@@ -1,8 +1,6 @@
-*.native
-_build
-doc
-billet.html
 *~
+_build
+blog/billet.html
 .merlin
 pprint.install
 dune-workspace.versions
