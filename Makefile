@@ -2,30 +2,31 @@
 
 .PHONY: all
 all:
-	dune build
+	@ dune build
 
 .PHONY: clean
 clean:
-	dune clean
+	@ dune clean
+	@ rm -f `cat .gitignore`
 
 .PHONY: doc
 doc:
-	dune build @doc
+	@ dune build @doc
 	@echo You can find the documentation in _build/default/_doc/_html/index.html
 
 .PHONY: export
 export: doc
-	ssh yquem.inria.fr rm -rf public_html/$(THIS)/doc
-	scp -r _build/default/_doc/_html yquem.inria.fr:public_html/$(THIS)/doc
+	@ ssh yquem.inria.fr rm -rf public_html/$(THIS)/doc
+	@ scp -r _build/default/_doc/_html yquem.inria.fr:public_html/$(THIS)/doc
 
 .PHONY: test
 test:
-	dune runtest
+	@ dune runtest
 
 .PHONY: bench
 bench:
-	dune build ./bench/PPrintBench.exe
-	time dune exec ./bench/PPrintBench.exe
+	@ dune build ./bench/PPrintBench.exe
+	@ time dune exec ./bench/PPrintBench.exe
 
 # ------------------------------------------------------------------------------
 
@@ -43,11 +44,11 @@ ARCHIVE  := https://github.com/fpottier/$(THIS)/archive/$(DATE).tar.gz
 
 .PHONY: install
 install: all
-	dune install -p $(THIS)
+	@ dune install -p $(THIS)
 
 .PHONY: uninstall
 uninstall:
-	ocamlfind remove $(THIS) || true
+	@ ocamlfind remove $(THIS) || true
 
 .PHONY: reinstall
 reinstall: uninstall
@@ -59,11 +60,11 @@ show: reinstall
 
 .PHONY: pin
 pin:
-	opam pin add $(THIS) . --yes
+	@ opam pin add $(THIS) . --yes
 
 .PHONY: unpin
 unpin:
-	opam pin remove $(THIS) --yes
+	@ opam pin remove $(THIS) --yes
 
 # ------------------------------------------------------------------------------
 
@@ -82,9 +83,10 @@ VERSIONS := \
   4.06.1 \
   4.07.1 \
   4.08.1 \
-  4.09.0 \
+  4.09.1 \
   4.09.0+bytecode-only \
   4.10.0 \
+  4.11.1 \
 
 .PHONY: versions
 versions:
@@ -103,7 +105,7 @@ HEADER   := header
 
 .PHONY: headers
 headers:
-	for f in src/*.{ml,mli} ; do \
+	@ for f in src/*.{ml,mli} ; do \
 	  $(HEADACHE) -h $(HEADER) $$f ; \
 	done
 
@@ -145,3 +147,18 @@ release:
 opam:
 	@ opam lint
 	@ opam publish -v $(DATE) $(THIS) $(ARCHIVE)
+
+# -------------------------------------------------------------------------
+
+# Copying pprint into Menhir's working directory.
+
+MENHIR_WORKING_COPY=$(HOME)/dev/menhir
+PPRINT_COPY=$(MENHIR_WORKING_COPY)/pprint
+
+.PHONY: menhir
+menhir: clean
+# Copy our source files to the Menhir repository.
+	@ rm -rf $(PPRINT_COPY)
+	@ cp -r $(shell pwd) $(PPRINT_COPY)
+# Remove a number of unneeded files and subdirectories.
+	@ (cd $(PPRINT_COPY) && rm -rf .git .gitignore Makefile README.md TODO.md bench blog header test src/Makefile)
