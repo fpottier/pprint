@@ -1,0 +1,18 @@
+# We expect THIS to be defined.
+#   It is the name of this library.
+
+# We expect CLIENTS to be defined.
+#   It is a list of directories where the vendored library should be copied.
+
+# We expect SUPERFLUOUS to be defined.
+#   It is a list of files and directories that should be deleted from the copy.
+
+.PHONY: vendor
+vendor:
+	@ \
+	for client in $(CLIENTS) ; do \
+	  copy=$$client/$(THIS) ; \
+	  rm -rf $$copy ; \
+	  cp -r $(shell pwd) $$copy ; \
+	  (cd $$copy && rm -rf $(SUPERFLUOUS)) ; \
+	done
