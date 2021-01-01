@@ -4,8 +4,8 @@
 )
 
 (library
-  (name pprint)
-  (public_name pprint)
+  (name vendored_pprint)
+  (public_name vendored_pprint)
   (wrapped false)
 )
 
