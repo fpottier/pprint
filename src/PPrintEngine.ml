@@ -58,39 +58,90 @@ class type output = object
 
 end
 
+(* ------------------------------------------------------------------------- *)
+
+(* Printing blank space (indentation characters). *)
+
+let blank_length =
+  80
+
+let blank_buffer =
+  String.make blank_length ' '
+
+let rec blanks output_fn n =
+  if n <= 0 then
+    ()
+  else if n <= blank_length then
+    output_fn blank_buffer 0 n
+  else begin
+    output_fn blank_buffer 0 blank_length;
+    blanks output_fn (n - blank_length)
+  end
+
+(* ------------------------------------------------------------------------- *)
+
+class with_blank_buffering char substring = object(self)
+  val mutable blank_buffered = None 
+
+  method private flush_blank =
+    match blank_buffered with
+    | None -> ()
+    | Some n -> 
+      blanks substring n;
+      blank_buffered <- None
+
+  method char c : unit =
+    begin match c with
+    | '\n' -> blank_buffered <- Some 0
+    | _ -> self#flush_blank
+    end;
+    char c
+
+  method substring s pos len =
+    if s == blank_buffer then (
+      blank_buffered <-
+        match blank_buffered with
+        | None -> Some len
+        | Some n -> Some (len + n)
+    ) else (
+      self#flush_blank;
+      substring s pos len
+    )
+end
+
 (* Three kinds of output channels are wrapped so as to satisfy the above
    interface: OCaml output channels, OCaml memory buffers, and OCaml
    formatters. *)
 
-class channel_output channel = object
-  method char = output_char channel
-  method substring = output_substring channel
+class channel_output channel =
+  with_blank_buffering
+    (output_char channel)
+    (output_substring channel)
     (* We used to use [output], but, as of OCaml 4.02 and with -safe-string
        enabled, the type of [output] has changed: this function now expects
        an argument of type [bytes]. The new function [output_substring] must
        be used instead. Furthermore, as of OCaml 4.06, -safe-string is enabled
        by default. In summary, we require OCaml 4.02, use [output_substring],
        and enable -safe-string. *)
-end
 
-class buffer_output buffer = object
-  method char = Buffer.add_char buffer
-  method substring = Buffer.add_substring buffer
-end
+class buffer_output buffer =
+  with_blank_buffering
+    (Buffer.add_char buffer)
+    (Buffer.add_substring buffer)
 
-class formatter_output fmt = object
-  method char = function
+class formatter_output fmt =
+  let char = function
     | '\n' -> Format.pp_force_newline fmt ()
     | ' '  -> Format.pp_print_space fmt ()
     | c    -> Format.pp_print_char fmt c
-
-  method substring str ofs len =
+  and substring str ofs len =
     Format.pp_print_text fmt (
       if ofs = 0 && len = String.length str
       then str
       else String.sub str ofs len
     )
-end
+  in
+  with_blank_buffering char substring
 
 (* ------------------------------------------------------------------------- *)
 
@@ -433,25 +484,7 @@ let custom c =
   assert (c#requirement >= 0);
   Custom c
 
-(* ------------------------------------------------------------------------- *)
-
-(* Printing blank space (indentation characters). *)
-
-let blank_length =
-  80
-
-let blank_buffer =
-  String.make blank_length ' '
-
-let rec blanks output n =
-  if n <= 0 then
-    ()
-  else if n <= blank_length then
-    output#substring blank_buffer 0 n
-  else begin
-    output#substring blank_buffer 0 blank_length;
-    blanks output (n - blank_length)
-  end
+let blanks output = blanks output#substring
 
 (* ------------------------------------------------------------------------- *)
 
