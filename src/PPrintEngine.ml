@@ -80,6 +80,10 @@ let rec blanks output_fn n =
 
 (* ------------------------------------------------------------------------- *)
 
+(* A helper that will wrap other output classes so as to withhold blank
+   characters at the beginning of the line until it is known that the line is
+   nonempty. *)
+
 class with_blank_buffering char substring = object(self)
   val mutable blank_buffered = 0
 
@@ -95,6 +99,12 @@ class with_blank_buffering char substring = object(self)
     char c
 
   method substring s pos len =
+    (* We don't want to retain just any white character, if the user built his
+       document using [char ' '], then it would be incorrect not to print that
+       space.
+       We only buffer "internal" blanks, i.e. those resulting from indentation
+       or calls to [blank]. All those get printed from [blank_buffer], which is
+       not exported. *)
     if s == blank_buffer then
       blank_buffered <- blank_buffered + len
     else (
