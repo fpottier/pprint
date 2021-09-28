@@ -81,29 +81,23 @@ let rec blanks output_fn n =
 (* ------------------------------------------------------------------------- *)
 
 class with_blank_buffering char substring = object(self)
-  val mutable blank_buffered = None 
+  val mutable blank_buffered = 0
 
   method private flush_blank =
-    match blank_buffered with
-    | None -> ()
-    | Some n -> 
-      blanks substring n;
-      blank_buffered <- None
+    blanks substring blank_buffered;
+    blank_buffered <- 0
 
   method char c : unit =
     begin match c with
-    | '\n' -> blank_buffered <- Some 0
+    | '\n' -> blank_buffered <- 0
     | _ -> self#flush_blank
     end;
     char c
 
   method substring s pos len =
-    if s == blank_buffer then (
-      blank_buffered <-
-        match blank_buffered with
-        | None -> Some len
-        | Some n -> Some (len + n)
-    ) else (
+    if s == blank_buffer then
+      blank_buffered <- blank_buffered + len
+    else (
       self#flush_blank;
       substring s pos len
     )
