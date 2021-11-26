@@ -1,3 +1,7 @@
+* Set up a real test suite.
+
+* Write a real documentation and tutorial.
+
 * Fix the warnings produced by `make doc`. Review its output.
 
 * Update the private `Makefile` so as to publish the package documentation
