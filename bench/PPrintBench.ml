@@ -331,6 +331,8 @@ let test3 engine =
       ()
 
 let () =
-  test2();
+  (* The comparison between the old and new engines is now disabled,
+     because the new engine removes trailing blank characters on every
+     line, whereas the old engine does not. *)
+  if false then test2();
   test3 New
-
