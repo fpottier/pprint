@@ -74,6 +74,10 @@ val hardline: document
     suppressed. *)
 val blank: int -> document
 
+(** [space] is a synonym for [blank 1]. It consists of one blank character.
+    It is therefore not equivalent to [char ' ']. *)
+val space: document
+
 (** [break n] is a document which consists of either [n] blank characters,
     when forced to display on a single line, or a single newline character,
     otherwise. Note that there is no choice at this point: choices are encoded
