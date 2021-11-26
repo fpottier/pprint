@@ -402,7 +402,7 @@ let char c =
   Char c
 
 let space =
-  char ' '
+  Blank 1
 
 let string s =
   String s
@@ -446,8 +446,6 @@ let blank n =
   match n with
   | 0 ->
       empty
-  | 1 ->
-      space
   | _ ->
       Blank n
 
