@@ -21,7 +21,7 @@ export: doc
 
 .PHONY: test
 test:
-	@ dune runtest
+	@ dune runtest --force
 
 .PHONY: bench
 bench:
