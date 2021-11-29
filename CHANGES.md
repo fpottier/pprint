@@ -1,6 +1,6 @@
 # Changes
 
-## 2021/11/26
+## 2021/11/29
 
 * Trailing blank characters at the end of a line are now suppressed.
   This includes indentation characters (whose production is implicit)
