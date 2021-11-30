@@ -4,6 +4,7 @@ authors: [
   "François Pottier <francois.pottier@inria.fr>"
   "Nicolas Pouillard <np@nicolaspouillard.fr>"
 ]
+license: "LGPL-2.0-only WITH OCaml-LGPL-linking-exception"
 homepage: "https://github.com/fpottier/pprint"
 dev-repo: "git+ssh://git@github.com/fpottier/pprint.git"
 bug-reports: "francois.pottier@inria.fr"
