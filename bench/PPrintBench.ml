@@ -32,7 +32,7 @@ module type ENGINE = sig
   val group: document -> document
   val ifflat: document -> document -> document
 
-  module ToBuffer : PPrintRenderer.RENDERER
+  module ToBuffer : PPrint.RENDERER
     with type channel = Buffer.t
      and type document = document
 

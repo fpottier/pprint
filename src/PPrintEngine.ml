@@ -712,13 +712,21 @@ let compact output doc =
 
 (* This is just boilerplate. *)
 
+module type RENDERER = sig
+  type channel
+  type document
+  val pretty: float -> int -> channel -> document -> unit
+  val compact: channel -> document -> unit
+end
+
 module MakeRenderer (X : sig
   type channel
   val output: channel -> output
-end) = struct
+end)
+: RENDERER with type channel = X.channel and type document = document
+= struct
   type channel = X.channel
-  type dummy = document
-  type document = dummy
+  type nonrec document = document
   let pretty rfrac width channel doc = pretty (X.output channel) (initial rfrac width) 0 false doc
   let compact channel doc = compact (X.output channel) doc
 end

@@ -109,18 +109,41 @@ val ifflat: document -> document -> document
 
 (** {1 Rendering documents} *)
 
+(**This signature describes the document renderers in a manner that
+   is independent of the type of the output channel. *)
+module type RENDERER = sig
+
+  (**The type of the output channel. *)
+  type channel
+
+  (**The type of documents. *)
+  type document
+
+  (** [pretty rfrac width channel document] pretty-prints the document
+      [document] into the output channel [channel]. The parameter [width] is
+      the maximum number of characters per line. The parameter [rfrac] is the
+      ribbon width, a fraction relative to [width]. The ribbon width is the
+      maximum number of non-indentation characters per line. *)
+  val pretty: float -> int -> channel -> document -> unit
+
+  (** [compact channel document] prints the document [document] to the output
+      channel [channel]. No indentation is used. All newline instructions are
+      respected, that is, no groups are flattened. *)
+  val compact: channel -> document -> unit
+
+end
+
 (** This renderer sends its output into an output channel. *)
-module ToChannel : PPrintRenderer.RENDERER
+module ToChannel : RENDERER
   with type channel = out_channel
    and type document = document
 
 (** This renderer sends its output into a memory buffer. *)
-module ToBuffer : PPrintRenderer.RENDERER
+module ToBuffer : RENDERER
   with type channel = Buffer.t
    and type document = document
 
 (** This renderer sends its output into a formatter channel. *)
-module ToFormatter : PPrintRenderer.RENDERER
+module ToFormatter : RENDERER
   with type channel = Format.formatter
    and type document = document
-

@@ -692,6 +692,13 @@ end
 
 (* Instantiating the renderers for the three kinds of output channels. *)
 
+module type RENDERER = sig
+  type channel
+  type document
+  val pretty: float -> int -> channel -> document -> unit
+  val compact: channel -> document -> unit
+end
+
 module ToChannel =
   Renderer(ChannelOutput)
 
