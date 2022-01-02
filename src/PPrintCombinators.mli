@@ -12,9 +12,7 @@
 
 open PPrintEngine
 
-(** A set of high-level combinators for building documents. *)
-
-(** {1 Single characters} *)
+(** {1 Single Characters} *)
 
 (** The following constant documents consist of a single character. *)
 
@@ -84,7 +82,7 @@ val twice: document -> document
     the document [doc]. *)
 val repeat: int -> document -> document
 
-(** {1 Lists and options} *)
+(** {1 Lists and Options} *)
 
 (** [concat docs] is the concatenation of the documents in the list [docs]. *)
 val concat: document list -> document
@@ -150,7 +148,7 @@ val flow_map: document -> ('a -> document) -> 'a list -> document
     and dot character. *)
 val url: string -> document
 
-(** {1 Alignment and indentation} *)
+(** {1 Alignment and Indentation} *)
 
 (* [hang n doc] is analogous to [align], but additionally indents
    all lines, except the first one, by [n]. Thus, the text in the
@@ -225,7 +223,7 @@ val surround_separate: int -> int -> document -> document -> document -> documen
     [surround_separate n b void opening sep closing (List.map f xs)]. *)
 val surround_separate_map: int -> int -> document -> document -> document -> document -> ('a -> document) -> 'a list -> document
 
-(** {1 Short-hands} *)
+(** {1 Short-Hands} *)
 
 (** [!^s] is a short-hand for [string s]. *)
 val ( !^ ) : string -> document

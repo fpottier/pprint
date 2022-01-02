@@ -10,14 +10,12 @@
 (*  License, with an exception, as described in the file LICENSE.         *)
 (**************************************************************************)
 
-(* A package of all of the above. *)
-
 include PPrintEngine (** @inline *)
 
-(** {1:PPrintCombinators High level combinators} *)
+(** {1:combinators High-Level Combinators} *)
 
 include PPrintCombinators (** @inline *)
 
-(** {1 Printing OCaml values} *)
+(** {1:ocaml Printing OCaml Values} *)
 
 module OCaml = PPrintOCaml

@@ -12,7 +12,7 @@
 
 (** A pretty-printing engine and a set of basic document combinators. *)
 
-(** {1 Building documents} *)
+(** {1:building Building Documents} *)
 
 (** Documents must be built in memory before they are rendered. This may seem
     costly, but it is a simple approach, and works well. *)
@@ -63,10 +63,25 @@ val utf8string: string -> document
     [utf8string (Printf.sprintf format <args>...)]. *)
 val utf8format: ('a, unit, string, document) format4 -> 'a
 
-(** [hardline] is a forced newline document. This document forces all enclosing
-    groups to be printed in non-flattening mode. In other words, any enclosing
-    groups are dissolved. *)
+(** [group doc] encodes a choice. If possible, then the entire document [group
+    doc] is rendered on a single line. Otherwise, the group is dissolved, and
+    [doc] is rendered. There might be further groups within [doc], whose
+    presence will lead to further choices being explored. *)
+val group: document -> document
+
+(**[hardline] is a forced newline document. This document has infinite ideal
+   width: thus, if there is a choice between printing it in flat mode and
+   printing in normal mode, normal mode is always preferred. In other words,
+   when [hardline] is placed directly inside a group, this group is dissolved:
+   [group hardline] is equivalent to [hardline]. *)
 val hardline: document
+
+(** [ifflat doc1 doc2] is rendered as [doc1] if part of a group that can be
+    successfully flattened, and is rendered as [doc2] otherwise. Use this
+    operation with caution. Because the pretty-printer is free to choose
+    between [doc1] and [doc2], these documents should be semantically
+    equivalent. *)
+val ifflat: document -> document -> document
 
 (** [blank n] is a document that consists of [n] blank characters. A blank
     character is like an ordinary ASCII space character [char ' '], except
@@ -78,10 +93,10 @@ val blank: int -> document
     It is therefore not equivalent to [char ' ']. *)
 val space: document
 
-(** [break n] is a document which consists of either [n] blank characters,
-    when forced to display on a single line, or a single newline character,
-    otherwise. Note that there is no choice at this point: choices are encoded
-    by the [group] combinator. *)
+(**[break n] is a document which consists of either [n] blank characters, if
+   the printing engine is in flat mode, or a single newline character, if the
+   printing engine is in normal mode. [break 1] is equivalent to [ifflat
+   (blank 1) hardline]. *)
 val break: int -> document
 
 (** [doc1 ^^ doc2] is the concatenation of the documents [doc1] and [doc2]. *)
@@ -93,19 +108,6 @@ val (^^): document -> document -> document
     after every newline character. No indentation is inserted at the beginning
     of the document. *)
 val nest: int -> document -> document
-
-(** [group doc] encodes a choice. If possible, then the entire document [group
-    doc] is rendered on a single line. Otherwise, the group is dissolved, and
-    [doc] is rendered. There might be further groups within [doc], whose
-    presence will lead to further choices being explored. *)
-val group: document -> document
-
-(** [ifflat doc1 doc2] is rendered as [doc1] if part of a group that can be
-    successfully flattened, and is rendered as [doc2] otherwise. Use this
-    operation with caution. Because the pretty-printer is free to choose
-    between [doc1] and [doc2], these documents should be semantically
-    equivalent. *)
-val ifflat: document -> document -> document
 
 (** [align doc] is the document [doc], in which the indentation level has been
     set to the current column. Thus, [doc] is rendered within a box whose
@@ -126,7 +128,7 @@ type range =
     mapping positions in the output text back to (sub)documents. *)
 val range: (range -> unit) -> document -> document
 
-(** {1 Rendering documents} *)
+(** {1:rendering Rendering Documents} *)
 
 (** This renderer sends its output into an output channel. *)
 module ToChannel : PPrintRenderer.RENDERER
@@ -143,7 +145,7 @@ module ToFormatter : PPrintRenderer.RENDERER
   with type channel = Format.formatter
    and type document = document
 
-(** {1 Defining custom documents} *)
+(** {1:defining Defining Custom Documents} *)
 
 (** A width requirement is expressed as an integer, where the value [max_int]
     is reserved and represents infinity. *)
