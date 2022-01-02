@@ -13,7 +13,7 @@ API documentation:
 - {{!PPrint.defining}defining custom documents,}
 - {{!PPrint.combinators}high-level combinators,}
 - combinators for {{!PPrint.OCaml}printing OCaml values};
-  these reside in the submodule [PPrint.OCaml].
+  these reside in the submodule {!PPrint.OCaml}.
 
 {1 Core Combinators}
 
