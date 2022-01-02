@@ -1,22 +1,10 @@
-This is an adaptation of Daan Leijen's
-[PPrint](https://hackage.haskell.org/package/wl-pprint)
-library, which itself is based on the ideas developed by Philip Wadler in
-[A Prettier Printer](http://homepages.inf.ed.ac.uk/wadler/papers/prettier/prettier.pdf).
+# PPrint: a Pretty-Printing Toolbox
 
-To install the latest released version of PPrint, it should be sufficient to type:
-```
-  opam install pprint
-```
+`PPrint` is an OCaml library for **pretty-printing textual documents**. It
+takes care of **indentation and line breaks**, and is typically used to
+**pretty-print code**.
 
-To install PPrint from source, type:
-```
-  make install
-```
-The requirements are OCaml 4.02 or later and `dune` 1.3 or later.
+To install the latest released version, type `opam install pprint`.
 
-The documentation is built by `make doc` and is then found in the
-file `_build/default/_doc/_html/index.html`.
-
-The [documentation of the latest released
-version](http://cambium.inria.fr/~fpottier/pprint/doc/pprint/PPrint/index.html)
-is also available online.
+Here is [the documentation of the latest released
+version](http://cambium.inria.fr/~fpottier/pprint/doc/pprint/).
