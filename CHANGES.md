@@ -8,6 +8,10 @@
 * The type `PPrint.OCaml.representation`, which was a synonym for
   `PPrint.document`, has been removed.
 
+* The internal modules `PPrintEngine`, `PPrintCombinators`, and `PPrintOCaml`
+  have been removed. Their existence was an implementation detail anyway.
+  Please refer to `PPrint`, `PPrint`, and `PPrint.OCaml` instead.
+
 ## 2021/11/29
 
 * Trailing blank characters at the end of a line are now suppressed.
