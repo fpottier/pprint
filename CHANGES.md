@@ -2,7 +2,8 @@
 
 ## 2022/01/02
 
-* Improved documentation.
+* Improved documentation. (Initial proposal by Thomas Refis, extended
+  by François Pottier.)
 
 * The type `PPrint.OCaml.representation`, which was a synonym for
   `PPrint.document`, has been removed.
