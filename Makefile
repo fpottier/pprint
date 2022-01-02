@@ -122,7 +122,7 @@ HEADER   := header
 
 .PHONY: headache
 headache:
-	@ for f in src/*.{ml,mli} ; do \
+	@ for f in src/*.{ml,mli} bench/*.{ml,mli} ; do \
 	  $(HEADACHE) -h $(HEADER) $$f ; \
 	done
 
