@@ -11,7 +11,3 @@
 (**************************************************************************)
 
 include PPrintCombinators (** @inline *)
-
-(** {1:ocaml Printing OCaml Values} *)
-
-module OCaml = PPrintOCaml
