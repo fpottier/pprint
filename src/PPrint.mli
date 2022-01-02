@@ -155,7 +155,7 @@ val url: string -> document
 
 (** {2 Alignment and Indentation} *)
 
-(*[hang n doc] is analogous to [align], but additionally indents all lines,
+(**[hang n doc] is analogous to [align], but additionally indents all lines,
    except the first one, by [n]. Thus, the text in the box forms a hanging
    indent. *)
 val hang: int -> document -> document
