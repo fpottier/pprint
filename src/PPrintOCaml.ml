@@ -11,7 +11,6 @@
 (**************************************************************************)
 
 open Printf
-open PPrintEngine
 open PPrintCombinators
 
 type constructor = string

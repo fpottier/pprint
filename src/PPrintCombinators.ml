@@ -10,7 +10,7 @@
 (*  License, with an exception, as described in the file LICENSE.         *)
 (**************************************************************************)
 
-open PPrintEngine
+include PPrintEngine
 
 (* ------------------------------------------------------------------------- *)
 

@@ -10,9 +10,11 @@
 (*  License, with an exception, as described in the file LICENSE.         *)
 (**************************************************************************)
 
-open PPrintEngine
+include module type of PPrintEngine (** @inline *)
 
-(** {1 Single Characters} *)
+(** {1:combinators High-Level Combinators} *)
+
+(** {2 Single Characters} *)
 
 (** The following constant documents consist of a single character. *)
 
@@ -49,7 +51,7 @@ val underscore: document
 val bang: document
 val bar: document
 
-(** {1 Delimiters} *)
+(** {2 Delimiters} *)
 
 (** [precede l x] is [l ^^ x]. *)
 val precede: document -> document -> document
@@ -72,7 +74,7 @@ val parens: document -> document
 val angles: document -> document
 val brackets: document -> document
 
-(** {1 Repetition} *)
+(** {2 Repetition} *)
 
 (** [twice doc] is the document obtained by concatenating two copies of
     the document [doc]. *)
@@ -82,7 +84,7 @@ val twice: document -> document
     the document [doc]. *)
 val repeat: int -> document -> document
 
-(** {1 Lists and Options} *)
+(** {2 Lists and Options} *)
 
 (** [concat docs] is the concatenation of the documents in the list [docs]. *)
 val concat: document list -> document
@@ -108,7 +110,7 @@ val separate2: document -> document -> document list -> document
     the document [f x]. *)
 val optional: ('a -> document) -> 'a option -> document
 
-(** {1 Text} *)
+(** {2 Text} *)
 
 (** [lines s] is the list of documents obtained by splitting [s] at newline
     characters, and turning each line into a document via [substring]. This
@@ -148,7 +150,7 @@ val flow_map: document -> ('a -> document) -> 'a list -> document
     and dot character. *)
 val url: string -> document
 
-(** {1 Alignment and Indentation} *)
+(** {2 Alignment and Indentation} *)
 
 (* [hang n doc] is analogous to [align], but additionally indents
    all lines, except the first one, by [n]. Thus, the text in the
@@ -223,7 +225,7 @@ val surround_separate: int -> int -> document -> document -> document -> documen
     [surround_separate n b void opening sep closing (List.map f xs)]. *)
 val surround_separate_map: int -> int -> document -> document -> document -> document -> ('a -> document) -> 'a list -> document
 
-(** {1 Short-Hands} *)
+(** {2 Short-Hands} *)
 
 (** [!^s] is a short-hand for [string s]. *)
 val ( !^ ) : string -> document

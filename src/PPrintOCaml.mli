@@ -29,7 +29,7 @@ type tag = int
 
 (** A representation of a value is a [PPrint] document. *)
 type representation =
-    PPrintEngine.document
+    PPrintCombinators.document
 
 (** [variant _ dc _ args] is a description of a constructed value whose data
     constructor is [dc] and whose arguments are [args]. The other two
