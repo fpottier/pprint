@@ -279,11 +279,6 @@ let (^//^) =
 let jump n b y =
   group (nest n (break b ^^ y))
 
-(* Deprecated.
-let ( ^@^  ) x y = group (x ^/^ y)
-let ( ^@@^ ) x y = group (nest 2 (x ^/^ y))
-*)
-
 let infix n b op x y =
   prefix n b (x ^^ blank b ^^ op) y
 
