@@ -1,35 +1,5 @@
 # ------------------------------------------------------------------------------
 
-.PHONY: all
-all:
-	@ dune build
-
-.PHONY: clean
-clean:
-	@ dune clean
-	@ rm -f `cat .gitignore`
-
-.PHONY: doc
-doc:
-	@ dune build @doc
-	@echo You can find the documentation in _build/default/_doc/_html/index.html
-
-.PHONY: export
-export: doc
-	@ ssh yquem.inria.fr rm -rf public_html/$(THIS)/doc
-	@ scp -r _build/default/_doc/_html yquem.inria.fr:public_html/$(THIS)/doc
-
-.PHONY: test
-test:
-	@ dune runtest --force
-
-.PHONY: bench
-bench:
-	@ dune build ./bench/PPrintBench.exe
-	@ time dune exec ./bench/PPrintBench.exe
-
-# ------------------------------------------------------------------------------
-
 # The version number is automatically set to the current date,
 # unless DATE is defined on the command line.
 DATE     := $(shell /bin/date +%Y%m%d)
@@ -41,6 +11,23 @@ THIS     := pprint
 ARCHIVE  := https://github.com/fpottier/$(THIS)/archive/$(DATE).tar.gz
 
 # ------------------------------------------------------------------------------
+
+.PHONY: all
+all:
+	@ dune build @all
+
+.PHONY: clean
+clean:
+	@ git clean -fX
+
+.PHONY: test
+test:
+	@ dune runtest --force
+
+.PHONY: bench
+bench:
+	@ dune build ./bench/PPrintBench.exe
+	@ time dune exec ./bench/PPrintBench.exe
 
 .PHONY: install
 install: all
@@ -68,6 +55,34 @@ unpin:
 
 # ------------------------------------------------------------------------------
 
+# Documentation.
+
+DOCDIR = _build/default/_doc/_html
+DOC    = $(DOCDIR)/index.html
+
+.PHONY: doc
+doc:
+	@ rm -rf _build/default/_doc
+	@ dune clean
+	@ dune build @doc
+	@ echo "You can view the documentation by typing 'make view'".
+
+.PHONY: view
+view: doc
+	@ echo Attempting to open $(DOC)...
+	@ if command -v firefox > /dev/null ; then \
+	  firefox $(DOC) ; \
+	else \
+	  open -a /Applications/Firefox.app/ $(DOC) ; \
+	fi
+
+.PHONY: export
+export: doc
+	ssh yquem.inria.fr rm -rf public_html/$(THIS)/doc
+	scp -r $(DOCDIR) yquem.inria.fr:public_html/$(THIS)/doc
+
+# ------------------------------------------------------------------------------
+
 # [make versions] compiles the package under many versions of OCaml,
 # whose list is specified below.
 
@@ -87,6 +102,8 @@ VERSIONS := \
   4.09.0+bytecode-only \
   4.10.0 \
   4.11.1 \
+  4.12.0 \
+  4.13.0 \
 
 .PHONY: versions
 versions:
@@ -98,13 +115,13 @@ versions:
 
 # ------------------------------------------------------------------------------
 
-# [make headers] updates the headers.
+# [make headache] updates the headers.
 
 HEADACHE := headache
 HEADER   := header
 
-.PHONY: headers
-headers:
+.PHONY: headache
+headache:
 	@ for f in src/*.{ml,mli} ; do \
 	  $(HEADACHE) -h $(HEADER) $$f ; \
 	done
@@ -134,19 +151,22 @@ release:
 # Upload. (This automatically makes a .tar.gz archive available on gitlab.)
 	@ git push
 	@ git push --tags
+# Done.
+	@ echo "Done."
+	@ echo "If happy, please type:"
+	@ echo "  \"make publish\"   to publish a new opam package"
+	@ echo "  \"make export\"    to upload the documentation to yquem.inria.fr"
 
-# -------------------------------------------------------------------------
+.PHONY: publish
+publish:
+# Publish an opam description.
+	@ opam publish -v $(DATE) $(THIS) $(ARCHIVE) .
 
-# Updating the opam package.
-
-# This entry assumes that [make release] has been run on the same day.
-
-# Once the opam package has been published, run [make export].
-
-.PHONY: opam
-opam:
-	@ opam lint
-	@ opam publish -v $(DATE) $(THIS) $(ARCHIVE)
+.PHONY: undo
+undo:
+# Undo the last release (assuming it was done on the same date).
+	@ git tag -d $(DATE)
+	@ git push -u origin :$(DATE)
 
 # -------------------------------------------------------------------------
 
