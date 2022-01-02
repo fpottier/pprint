@@ -1,5 +1,12 @@
 # Changes
 
+## 2022/01/02
+
+* Improved documentation.
+
+* The type `PPrint.OCaml.representation`, which was a synonym for
+  `PPrint.document`, has been removed.
+
 ## 2021/11/29
 
 * Trailing blank characters at the end of a line are now suppressed.
