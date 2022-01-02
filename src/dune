@@ -3,6 +3,7 @@
   (public_name pprint)
   (modules :standard \ PPrintMini)
   (wrapped false)
+  (flags "-w" "A-4")
 )
 
 (documentation)
