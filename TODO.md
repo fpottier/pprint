@@ -1,3 +1,6 @@
+* Test the interaction of `range` with the automatic removal of trailing
+  blank characters. Do we obtain the desired behavior?
+
 * Set up a real test suite.
 
 * Write a real documentation and tutorial.
