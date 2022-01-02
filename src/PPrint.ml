@@ -393,9 +393,6 @@ let seq2 opening separator closing =
 
 (* There is no protection against cyclic values. *)
 
-type representation =
-    document
-
 let tuple =
   seq1 lparen comma rparen
 
