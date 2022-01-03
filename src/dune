@@ -1,9 +1,13 @@
+(env
+  (dev     (flags :standard -w @A-4))
+  (release (flags :standard))
+)
+
 (library
   (name pprint)
   (public_name pprint)
   (modules :standard \ PPrintMini)
   (wrapped false)
-  (flags :standard -w +A-4)
 )
 
 (documentation)
