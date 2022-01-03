@@ -1,16 +1,14 @@
 # Changes
 
-## 2022/01/02
+## 2022/01/03
 
 * Improved documentation. (Initial proposal by Thomas Refis, extended
   by François Pottier.)
 
-* The type `PPrint.OCaml.representation`, which was a synonym for
-  `PPrint.document`, has been removed.
-
-* The internal modules `PPrintEngine`, `PPrintCombinators`, and `PPrintOCaml`
-  have been removed. Their existence was an implementation detail anyway.
-  Please refer to `PPrint`, `PPrint`, and `PPrint.OCaml` instead.
+* The internal modules `PPrintEngine`, `PPrintCombinators`, `PPrintRenderer`,
+  and `PPrintOCaml` have been removed. (Their existence was an implementation
+  detail.) Please refer to `PPrint`, `PPrint`, `PPrint`, and `PPrint.OCaml`
+  instead.
 
 ## 2021/11/29
 
