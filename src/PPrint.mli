@@ -256,7 +256,8 @@ module OCaml : sig
 
 (* The signature of this module is compatible with that expected by the
    [camlp4] generator [Camlp4RepresentationGenerator]. This explains why
-   some functions have unused parameters. *)
+   some functions have unused parameters. This is also the reason why
+   there is a type [representation]. *)
 
 type constructor = string
 type type_name = string
@@ -335,5 +336,10 @@ val ref : ('a -> document) -> 'a ref -> document
 (** [unknown t _] represents an unknown value of type [t]. It is rendered
     as a string of the form [<abstr:t>]. *)
 val unknown : type_name -> 'a -> document
+
+(**/**)
+
+type representation =
+  document
 
 end (* OCaml *)

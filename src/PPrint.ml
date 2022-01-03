@@ -462,4 +462,7 @@ let string =
 let unknown tyname _ =
   dsprintf "<abstr:%s>" tyname
 
+type representation =
+  document
+
 end (* OCaml *)
