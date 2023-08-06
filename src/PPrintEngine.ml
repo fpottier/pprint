@@ -415,10 +415,10 @@ let fancysubstring s ofs len apparent_length =
   else
     FancyString (s, ofs, len, apparent_length)
 
-let substring s ofs len =
+let[@inline] substring s ofs len =
   fancysubstring s ofs len len
 
-let fancystring s apparent_length =
+let[@inline] fancystring s apparent_length =
   fancysubstring s 0 (String.length s) apparent_length
 
 (* The following function was stolen from [Batteries]. *)
@@ -435,10 +435,10 @@ let utf8_length s =
   in
   length_aux s 0 0
 
-let utf8string s =
+let[@inline] utf8string s =
   fancystring s (utf8_length s)
 
-let utf8format f =
+let[@inline] utf8format f =
   Printf.ksprintf utf8string f
 
 let hardline =
@@ -501,7 +501,7 @@ let group x =
 let align x =
   Align (requirement x, x)
 
-let range hook x =
+let[@inline] range hook x =
   Range (requirement x, hook, x)
 
 let custom c =
