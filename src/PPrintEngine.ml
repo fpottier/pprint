@@ -393,8 +393,15 @@ let rec requirement = function
 (* ------------------------------------------------------------------------- *)
 
 (* The above algebraic data type is not exposed to the user. Instead, we
-   expose the following functions. These functions construct a raw document
-   and compute its requirement, so as to obtain a document. *)
+   expose the following smart constructors. These functions construct a raw
+   document and compute its requirement, so as to obtain a document. *)
+
+(* The smart constructors ensure that [Empty] is the only empty document;
+   that is, there is no other way of constructing a document that behaves
+   (in all contexts) as an empty document. (This claim could be violated
+   by constructing [range hook empty] where [hook] has no effect, or by
+   constructing a [custom] document that behaves like an empty document.
+   These violations seem benign.) *)
 
 let empty =
   Empty
@@ -407,7 +414,10 @@ let space =
   Blank 1
 
 let string s =
-  String s
+  if String.length s = 0 then
+    empty
+  else
+    String s
 
 let fancysubstring s ofs len apparent_length =
   if len = 0 then
@@ -452,11 +462,17 @@ let blank n =
       Blank n
 
 let ifflat doc1 doc2 =
-  (* Avoid nesting [IfFlat] in the left-hand side of [IfFlat], as this
-     is redundant. *)
-  match doc1 with
-  | IfFlat (doc1, _)
-  | doc1 ->
+  match doc1, doc2 with
+  (* If both documents are empty then the result is empty. *)
+  | Empty, Empty ->
+      empty
+  (* We avoid nesting [IfFlat] inside the left-hand side of [IfFlat]. That
+     would be redundant; and the function [requirement] relies on the fact
+     that the left child of [IfFlat] cannot be [IfFlat]. On the right-hand
+     side, a symmetric optimization would be valid as well, but is not
+     useful. *)
+  | IfFlat (doc1, _), doc2
+  | doc1, doc2 ->
       IfFlat (doc1, doc2)
 
 let[@inline] internal_break i =
@@ -488,18 +504,30 @@ let (^^) x y =
 
 let nest i x =
   assert (i >= 0);
-  Nest (requirement x, i, x)
+  match x with
+  | Empty ->
+      Empty
+  | _ ->
+      Nest (requirement x, i, x)
 
 let group x =
-  let req = requirement x in
-  (* Minor optimisation: an infinite requirement dissolves a group. *)
-  if req = infinity then
-    x
-  else
-    Group (req, x)
+  match x with
+  | Empty ->
+      Empty
+  | _ ->
+      let req = requirement x in
+      (* Minor optimisation: an infinite requirement dissolves a group. *)
+      if req = infinity then
+        x
+      else
+        Group (req, x)
 
 let align x =
-  Align (requirement x, x)
+  match x with
+  | Empty ->
+      Empty
+  | _ ->
+      Align (requirement x, x)
 
 let[@inline] range hook x =
   Range (requirement x, hook, x)
