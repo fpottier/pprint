@@ -1,4 +1,4 @@
-(test
+(executable
   (name PPrintTest)
   (libraries unix pprint)
 )

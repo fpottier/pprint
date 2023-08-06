@@ -22,7 +22,7 @@ clean:
 
 .PHONY: test
 test:
-	@ dune runtest --force
+	@ dune exec test/PPrintTest.exe
 
 .PHONY: bench
 bench:
