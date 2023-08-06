@@ -91,7 +91,6 @@ export: doc
 #   opam switch create 4.03.0
 
 VERSIONS := \
-  4.02.3 \
   4.03.0 \
   4.04.2 \
   4.05.0 \
