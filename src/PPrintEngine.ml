@@ -459,14 +459,14 @@ let ifflat doc1 doc2 =
   | doc1 ->
       IfFlat (doc1, doc2)
 
-let internal_break i =
-  ifflat (blank i) hardline
+let[@inline] internal_break i =
+  IfFlat (blank i, hardline)
 
 let break0 =
-  internal_break 0
+  IfFlat (Empty, HardLine) (* this is [internal_break 0] *)
 
 let break1 =
-  internal_break 1
+  IfFlat (Blank 1, HardLine) (* this is [internal_break 1] *)
 
 let break i =
   match i with
