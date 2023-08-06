@@ -368,8 +368,9 @@ let rec requirement = function
   | Blank len ->
       len
   | IfFlat (doc1, _) ->
-      (* In flattening mode, the requirement of [ifflat x y] is just the
-         requirement of its flat version, [x]. *)
+      (* The requirement of a document is the space that it needs when it is
+         printed in flattening mode. So, the requirement of [ifflat x y] is
+         just the requirement of its flat version, [x]. *)
       (* The smart constructor [ifflat] ensures that [IfFlat] is never nested
          in the left-hand side of [IfFlat], so this recursive call is not a
          problem; the function [requirement] has constant time complexity. *)
