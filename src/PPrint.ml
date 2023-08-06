@@ -54,7 +54,7 @@ let bar             = char '|'
 
 (* Repetition. *)
 
-let twice doc =
+let[@inline] twice doc =
   doc ^^ doc
 
 let repeat n doc =
@@ -70,17 +70,17 @@ let repeat n doc =
 
 (* Delimiters. *)
 
-let precede   l x   = l ^^ x
-let terminate r x   = x ^^ r
-let enclose l r x   = l ^^ x ^^ r
+let[@inline] precede   l x   = l ^^ x
+let[@inline] terminate r x   = x ^^ r
+let[@inline] enclose l r x   = l ^^ x ^^ r
 
-let squotes         = enclose squote squote
-let dquotes         = enclose dquote dquote
-let bquotes         = enclose bquote bquote
-let braces          = enclose lbrace rbrace
-let parens          = enclose lparen rparen
-let angles          = enclose langle rangle
-let brackets        = enclose lbracket rbracket
+let[@inline] squotes  x = enclose squote squote x
+let[@inline] dquotes  x = enclose dquote dquote x
+let[@inline] bquotes  x = enclose bquote bquote x
+let[@inline] braces   x = enclose lbrace rbrace x
+let[@inline] parens   x = enclose lparen rparen x
+let[@inline] angles   x = enclose langle rangle x
+let[@inline] brackets x = enclose lbracket rbracket x
 
 (* -------------------------------------------------------------------------- *)
 
@@ -267,14 +267,14 @@ let hang i d =
 
 let ( !^ ) = string
 
-let ( ^/^ ) x y =
+let[@inline] ( ^/^ ) x y =
   x ^^ break 1 ^^ y
 
 let prefix n b x y =
   group (x ^^ nest n (break b ^^ y))
 
-let (^//^) =
-  prefix 2 1
+let[@inline] (^//^) x y =
+  prefix 2 1 x y
 
 let jump n b y =
   group (nest n (break b ^^ y))
@@ -320,7 +320,7 @@ type tag = int
    as opposed to [arbitrary_string], because the strings that we produce will
    never contain a newline character. *)
 
-let dsprintf format =
+let[@inline] dsprintf format =
   ksprintf string format
 
 (* -------------------------------------------------------------------------- *)
