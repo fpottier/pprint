@@ -18,7 +18,7 @@ all:
 
 .PHONY: clean
 clean:
-	@ git clean -fX
+	@ git clean -fdX
 
 .PHONY: test
 test:
