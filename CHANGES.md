@@ -1,5 +1,12 @@
 # Changes
 
+## 2023/08/XX
+
+* The new function `is_empty` allows testing (in constant time) whether
+  a document is empty.
+
+* The library now requires OCaml 4.03 or newer.
+
 ## 2022/01/03
 
 * Improved documentation. (Initial proposal by Thomas Refis, extended
@@ -15,7 +22,7 @@
 * Trailing blank characters at the end of a line are now suppressed.
   This includes indentation characters (whose production is implicit)
   as well as blank characters that are explicitly produced by the
-  combinators [space] and [blank]. Trailing blank characters are
+  combinators `space` and `blank`. Trailing blank characters are
   suppressed in both rendering modes (pretty and compact).
   (Contributed by Thomas Refis, reviewed and polished by François Pottier.)
 
