@@ -142,6 +142,17 @@ type range =
    (sub)documents. *)
 val range: (range -> unit) -> document -> document
 
+(** {1:inspecting Inspecting Documents} *)
+
+(**Documents are abstract, and cannot be inspected. Nevertheless, it is
+   possible to test whether a document is empty. *)
+
+(**[is_empty doc] determines whether the document [doc] is empty. Most ways
+   of constructing empty documents, such as [empty], [empty ^^ empty],
+   [nest j empty], and so on, are recognized as such. However, a document
+   constructed by {!val-custom} or {!val-range} is never considered empty. *)
+val is_empty: document -> bool
+
 (** {1:rendering Rendering Documents} *)
 
 (**Three renderers are available. They offer the same API, described

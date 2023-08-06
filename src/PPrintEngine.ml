@@ -539,6 +539,14 @@ let custom c =
 
 (* ------------------------------------------------------------------------- *)
 
+(* Because the smart constructors ensure that [Empty] is the only empty
+   document, [is_empty] can be implemented in a simple and efficient way. *)
+
+let is_empty x =
+  match x with Empty -> true | _ -> false
+
+(* ------------------------------------------------------------------------- *)
+
 (* This function expresses the following invariant: if we are in flattening
    mode, then we must be within bounds, i.e. the width and ribbon width
    constraints must be respected. *)

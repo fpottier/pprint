@@ -9,6 +9,7 @@ typically used to {b pretty-print code}.
 An experienced user may wish to jump directly to a section of the
 API documentation:
 - {{!PPrint.building}building documents,}
+- {{!PPrint.inspecting}inspecting documents,}
 - {{!PPrint.rendering}rendering documents,}
 - {{!PPrint.defining}defining custom documents,}
 - {{!PPrint.combinators}high-level combinators,}
