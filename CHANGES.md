@@ -7,6 +7,9 @@
 
 * The library now requires OCaml 4.03 or newer.
 
+* Documentation: add a warning about the time and space complexity of
+  a naive use of `ifflat`.
+
 ## 2022/01/03
 
 * Improved documentation. (Initial proposal by Thomas Refis, extended
