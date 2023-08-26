@@ -136,7 +136,12 @@ normal mode, the {b conditional construct} {{!PPrint.ifflat}ifflat} allows
 testing whether the printing engine is currently in flat mode or in normal
 mode. The document [ifflat doc1 doc2] is rendered as [doc1] if the engine is
 currently in flat mode, and as [doc2] if the engine is currently in normal
-mode.
+mode. This is a powerful combinator; however, one must be aware that
+{i both branches are evaluated and constructed in memory} during the
+document construction phase. So, if used naively,
+{{!PPrint.ifflat}ifflat} can cause exponential time and space usage.
+To avoid this danger, {{!PPrint.ifflat}ifflat} should
+typically be applied to documents of constant size.
 
 The {b blank combinator} {{!PPrint.blank}blank} is analogous to
 {{!PPrint.break}break}, but produces non-breakable blank characters. A blank
