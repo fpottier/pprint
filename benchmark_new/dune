@@ -1,0 +1,4 @@
+(executable
+  (name main)
+  (libraries pprint fix core_unix.command_unix core_bench)
+)
