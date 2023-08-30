@@ -5,13 +5,13 @@
 * The new function `is_empty` allows testing (in constant time) whether
   a document is empty.
 
-* The library now requires OCaml 4.03 or newer.
-
 * Documentation: add a warning about the time and space complexity of
   a naive use of `ifflat`.
 
-* Add a new micro-benchmark, using `core_bench`, involving randomly-generated
-  arithmetic expressions, in `benchmark_new`.
+* The library now requires OCaml 4.03 or newer.
+
+* Add a new micro-benchmark, which uses `core_bench` and involves
+  randomly-generated arithmetic expressions.
 
 ## 2022/01/03
 
