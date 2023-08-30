@@ -6,7 +6,6 @@
 (library
   (name pprint)
   (public_name pprint)
-  (modules :standard \ PPrintMini)
   (wrapped false)
 )
 
