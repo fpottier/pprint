@@ -123,7 +123,7 @@ HEADER   := header
 
 .PHONY: headache
 headache:
-	@ for f in {src,benchmark_old,benchmark_new}/*.{ml,mli} ; do \
+	@ for f in {src,benchmark_old}/*.{ml,mli} benchmark_new/*.ml ; do \
 	  $(HEADACHE) -h $(HEADER) $$f ; \
 	done
 
