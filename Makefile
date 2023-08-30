@@ -168,31 +168,3 @@ undo:
 # Undo the last release (assuming it was done on the same date).
 	@ git tag -d $(DATE)
 	@ git push -u origin :$(DATE)
-
-# -------------------------------------------------------------------------
-
-# Copying pprint into Menhir's working directory.
-
-MENHIR_WORKING_COPY=$(HOME)/dev/menhir
-PPRINT_COPY=$(MENHIR_WORKING_COPY)/pprint
-
-UNNECESSARY= \
-  .git \
-  .gitignore \
-  Makefile \
-  README.md \
-  TODO.md \
-  benchmark_old \
-  benchmark_new \
-  blog \
-  header \
-  test \
-  src/Makefile \
-
-.PHONY: menhir
-menhir: clean
-# Copy our source files to the Menhir repository.
-	@ rm -rf $(PPRINT_COPY)
-	@ cp -r $(shell pwd) $(PPRINT_COPY)
-# Remove a number of unneeded files and subdirectories.
-	@ (cd $(PPRINT_COPY) && rm -rf $(UNNECESSARY))
