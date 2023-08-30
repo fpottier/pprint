@@ -39,6 +39,9 @@ module Generate = struct
         EBinOp (expr s1, op, expr s2)
 
   let main (s : int) : main =
+    (* We want reproducible results, and placing a call to [Random.init]
+       in the main program does not seem to work (not sure why). *)
+    Random.init 128;
     expr s
 
 end
