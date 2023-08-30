@@ -26,8 +26,7 @@ test:
 
 .PHONY: bench
 bench:
-	@ dune build ./bench/PPrintBench.exe
-	@ time dune exec ./bench/PPrintBench.exe
+	@ dune exec ./benchmark_old/PPrintBench.exe
 
 .PHONY: install
 install: all
@@ -123,7 +122,7 @@ HEADER   := header
 
 .PHONY: headache
 headache:
-	@ for f in src/*.{ml,mli} bench/*.{ml,mli} ; do \
+	@ for f in {src,benchmark_old}/*.{ml,mli} ; do \
 	  $(HEADACHE) -h $(HEADER) $$f ; \
 	done
 
@@ -182,4 +181,4 @@ menhir: clean
 	@ rm -rf $(PPRINT_COPY)
 	@ cp -r $(shell pwd) $(PPRINT_COPY)
 # Remove a number of unneeded files and subdirectories.
-	@ (cd $(PPRINT_COPY) && rm -rf .git .gitignore Makefile README.md TODO.md bench blog header test src/Makefile)
+	@ (cd $(PPRINT_COPY) && rm -rf .git .gitignore Makefile README.md TODO.md benchmark_old blog header test src/Makefile)
