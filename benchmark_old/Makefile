@@ -1,4 +1,11 @@
-.PHONY: all clean doc test bench
+.PHONY: all
+all:
+	dune build @all
 
-all clean doc test bench:
-	$(MAKE) -C .. $@
+.PHONY: clean
+clean:
+	git clean -fX .
+
+.PHONY: bench
+bench:
+	dune exec ./PPrintBench.exe

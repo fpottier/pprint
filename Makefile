@@ -26,7 +26,7 @@ test:
 
 .PHONY: bench
 bench:
-	@ dune exec ./benchmark_old/PPrintBench.exe
+	@ make -C benchmark_old $@
 	@ make -C benchmark_new $@
 
 .PHONY: install
