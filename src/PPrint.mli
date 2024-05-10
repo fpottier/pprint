@@ -199,7 +199,7 @@ val infix: int -> int -> document -> document -> document -> document
    {[
      opening
        contents
-       closing
+     closing
    ]}
    The parameter [n] controls the nesting of [contents] (when not flat).
    The parameter [b] controls the number of spaces between [opening] and
