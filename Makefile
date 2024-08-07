@@ -30,7 +30,9 @@ bench:
 	@ make -C benchmark_new $@
 
 .PHONY: install
-install: all
+install:
+	@ dune clean
+	@ dune build -p $(THIS)
 	@ dune install -p $(THIS)
 
 .PHONY: uninstall
